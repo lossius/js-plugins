@@ -14,7 +14,7 @@ Download and install:
 Changelog
 ---------
 
-* 2013-04-18: Adding plugins for conversion between stereo and mid-side. Also adding several plugins for horisontal and vertical manipulation of Bformat signals: adjustment of directivity, focus and push.
+* 2013-04-18: Adding plugins for conversion between stereo and mid-side. Also adding several plugins for horisontal and vertical manipulation of Bformat signals: adjustment of directivity, focus, press and push.
 * 2013-04-02: Initial commit of 6 modules for encoding mono and stereo sources as 1st order Bformat, and for pitch, roll and yaw manipulations of Bformat signals.
 
 

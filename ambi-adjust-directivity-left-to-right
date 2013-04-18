@@ -1,0 +1,73 @@
+// Copyright (c) 2013, Trond Lossius
+// All rights reserved.
+
+// Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+// Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+// Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+// Neither the name of the Trond Lossius nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+desc: Adjust directivity of a Bformat ambisonics sound field in the left-right direction
+
+in_pin:W
+in_pin:X
+in_pin:Y
+in_pin:Z
+
+out_pin:W
+out_pin:X
+out_pin:Y
+out_pin:Z
+
+slider1:0<0,1,0.01>full directivity - none
+
+
+/**********************************************************
+Updated slider value:
+**********************************************************/
+@slider
+
+angle = slider1 * 3.14159265359 * 0.5;
+
+// zero matrix, but commenting out the ones that we'll calculate afterwards:
+
+//matrix00 = 0.;
+matrix01 = 0.;
+matrix02 = 0.;
+matrix03 = 0.;
+
+matrix10 = 0.;
+//matrix11 = 0.;
+matrix12 = 0.;
+matrix13 = 0.;
+
+matrix20 = 0.;
+matrix21 = 0.;
+//matrix22 = 0.;
+matrix23 = 0.;
+
+matrix30 = 0.;
+matrix31 = 0.;
+matrix32 = 0.;
+//matrix33 = 0.;
+
+matrix00 = sqrt(1.0 + sin(angle));
+matrix11 = matrix00;
+matrix22 = sqrt(1.0 - sin(angle));
+matrix33 = matrix00;
+
+/**********************************************************
+Calculate audio sample
+**********************************************************/
+@sample
+wIn = spl0;
+xIn = spl1;
+yIn = spl2;
+zIn = spl3;
+
+// Matrix multiplication with input signal:
+spl0 = wIn * matrix00 + xIn * matrix01 + yIn * matrix02 + zIn * matrix03;
+spl1 = wIn * matrix10 + xIn * matrix11 + yIn * matrix12 + zIn * matrix13;
+spl2 = wIn * matrix20 + xIn * matrix21 + yIn * matrix22 + zIn * matrix23;
+spl3 = wIn * matrix30 + xIn * matrix31 + yIn * matrix32 + zIn * matrix33;

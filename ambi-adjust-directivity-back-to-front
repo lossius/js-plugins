@@ -8,7 +8,7 @@
 // Neither the name of the Trond Lossius nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-desc: Focus Bformat ambisonics sound field in the vertical direction
+desc: Adjust directivity of a Bformat ambisonics sound field in the back-front direction
 
 in_pin:W
 in_pin:X
@@ -20,7 +20,7 @@ out_pin:X
 out_pin:Y
 out_pin:Z
 
-slider1:0<-1,1,0.01>down - center - up
+slider1:0<0,1,0.01>full directivity - none
 
 
 /**********************************************************
@@ -35,7 +35,7 @@ angle = slider1 * 3.14159265359 * 0.5;
 //matrix00 = 0.;
 matrix01 = 0.;
 matrix02 = 0.;
-//matrix03 = 0.;
+matrix03 = 0.;
 
 matrix10 = 0.;
 //matrix11 = 0.;
@@ -47,21 +47,15 @@ matrix21 = 0.;
 //matrix22 = 0.;
 matrix23 = 0.;
 
-//matrix30 = 0.;
+matrix30 = 0.;
 matrix31 = 0.;
 matrix32 = 0.;
 //matrix33 = 0.;
 
-matrix00 = 1. / (1. + sin(abs(angle)));
+matrix00 = sqrt(1.0 + sin(angle));
+matrix11 = sqrt(1.0 - sin(angle));
+matrix22 = matrix00;
 matrix33 = matrix00;
-matrix11 = cos(angle) * matrix00;
-matrix22 = matrix11;
-
-// This is an intermediate calculation for efficiency:
-matrix30 = sin(angle) * matrix00;
-
-matrix03 = matrix30 / sqrt(2);
-matrix30 = sqrt(2) * matrix30;
 
 /**********************************************************
 Calculate audio sample

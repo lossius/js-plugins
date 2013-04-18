@@ -10,13 +10,6 @@
 
 desc: Focus Bformat ambisonics sound field in the left-to-right direction
 
-// This effect performs 1st order rotation about the left-right axis of ambisonics WXYZ signals. According to aircraft principal axes [1] this is a pitch rotation, while Dave Malham [2] calls this "tumble". It uses SpatDIF coordinatec onventions: If we imagine an airplane with the tip poining forward, a tumble with positive abgle will make the tip point upwards. The code is based on [2].
-//
-// REFERENCES:
-//
-// [1] http://en.wikipedia.org/wiki/Yaw,_pitch_and_roll_(rotations)
-// [2] Malham, Dave (1998): Spatial Hearing Mechanisms and Sound Reproduction. Available online at http://www.york.ac.uk/inst/mustech/3d_audio/ambis2.htm
-
 in_pin:W
 in_pin:X
 in_pin:Y
@@ -26,8 +19,6 @@ out_pin:W
 out_pin:X
 out_pin:Y
 out_pin:Z
-
-// Slider range is set to [-360,360] rather than [-180, 180] for more flexible scripting of rotating movements
 
 slider1:0<-1,1,0.01>left - center - right
 

@@ -20,7 +20,7 @@ out_pin:X
 out_pin:Y
 out_pin:Z
 
-slider1:0<0,1,0.01>normal - pressed
+slider1:0<-1,1,0.01>left - normal - right
 
 
 /**********************************************************
@@ -58,7 +58,6 @@ matrix22 = matrix11 * matrix11;
 matrix33 = matrix11;
 
 matrix20 = sqrt2 * sin(abs(angle)) * sin(angle);
-
 
 
 /**********************************************************

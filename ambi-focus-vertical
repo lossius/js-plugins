@@ -20,7 +20,7 @@ out_pin:X
 out_pin:Y
 out_pin:Z
 
-slider1:0<-1,1,0.01>down - center - up
+slider1:0<-1,1,0.01>down - normal - up
 
 
 /**********************************************************

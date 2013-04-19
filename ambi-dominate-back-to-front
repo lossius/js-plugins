@@ -20,13 +20,14 @@ out_pin:X
 out_pin:Y
 out_pin:Z
 
-slider1:0<-24,24,0.1>dB: back - normal - front
+slider1:0<-24,24,0.1>back - normal - front (dB)
 
 
 /**********************************************************
 Updated slider value:
 **********************************************************/
 @slider
+
 linearGain = pow(10, slider1 * 0.05);
 
 // zero matrix, but commenting out the ones that we'll calculate afterwards:

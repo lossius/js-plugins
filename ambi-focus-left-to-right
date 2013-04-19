@@ -33,16 +33,16 @@ angle = -slider1 * 3.14159265359 * 0.5;
 // zero matrix, but commenting out the ones that we'll calculate afterwards:
 
 //matrix00 = 0.;
-//matrix01 = 0.;
-matrix02 = 0.;
+matrix01 = 0.;
+//matrix02 = 0.;
 matrix03 = 0.;
 
-//matrix10 = 0.;
+matrix10 = 0.;
 //matrix11 = 0.;
 matrix12 = 0.;
 matrix13 = 0.;
 
-matrix20 = 0.;
+//matrix20 = 0.;
 matrix21 = 0.;
 //matrix22 = 0.;
 matrix23 = 0.;

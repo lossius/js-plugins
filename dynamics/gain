@@ -8,38 +8,33 @@
 // Neither the name of the Trond Lossius nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-desc: Convert mid-side signal to stereo
+desc: Adjust gain
 
-// This effect converts a stereo source to mid-side
+slider1:0<-24,24,0.1>Gain adjustment (dB)
 
-// This effect have no setable parameters and hence no sliders
-slider1:0<-12,12,0.5>Mid input pre-processing level
-slider2:0<-12,12,0.5>Side input pre-processing level
-slider3:1<0,2,0.01>Stereo width
-slider4:0<0,1,1{mid side, side mid}>Swap input channels
-slider5:0<0,1,1{not muted,muted}>Mute mid channel
-slider6:0<0,1,1{not muted,muted}>Mute side channel
-
-in_pin:M
-in_pin:S
+in_pin:L
+in_pin:R
 
 out_pin:L
 out_pin:R
 
+@init
+mIsInitialised = 0;
+
 @slider
+mNewGain = pow(10.0, slider1 * 0.05);
 
+(mIsInitialised==0) ? (
+	mGain = mNewGain;
+	mIsInitialised=1;
+);
 
-midChannelLinearPreAdjust  = pow(10, slider1 * 0.05);
-sideChannelLinearPreAdjust = pow(10, slider2 * 0.05);
-width = slider3;
-swap = slider4;
-playMid  = 1 - slider5;
-playSide = 1 - slider6;
+@block
+mInc = (mNewGain - mGain) / samplesblock;
+
 
 @sample
-// Compensating mid and side input signals for muting, swap and pre-processing adjustments
-mid  = playMid  * (spl0 * (1-swap) + spl1 * swap) * midChannelLinearPreAdjust;
-side = playSide * (spl1 * (1-swap) + spl0 * swap) * sideChannelLinearPreAdjust;
+mGain = mGain + mInc;
 
-spl0 = (2-width)*mid + width*side;
-spl1 = (2-width)*mid - width*side;
+spl0 = spl0 * mGain;
+spl1 = spl1 * mGain;

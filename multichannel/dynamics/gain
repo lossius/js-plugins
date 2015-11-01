@@ -8,15 +8,11 @@
 // Neither the name of the Trond Lossius nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-desc: Gain Adjust
+desc: Multichannel Gain Adjust
 
 slider1:0<-24,24,0.1>Gain adjustment (dB)
 
-in_pin:L
-in_pin:R
-
-out_pin:L
-out_pin:R
+// No in_pin or out_pin configurations, keeps number of channels flexible
 
 @init
 mIsInitialised = 0;
@@ -29,6 +25,7 @@ mNewGain = pow(10.0, slider1 * 0.05);
 	mIsInitialised=1;
 );
 
+
 @block
 mInc = (mNewGain - mGain) / samplesblock;
 
@@ -36,5 +33,8 @@ mInc = (mNewGain - mGain) / samplesblock;
 @sample
 mGain = mGain + mInc;
 
-spl0 = spl0 * mGain;
-spl1 = spl1 * mGain;
+i = 0;
+loop(num_ch,
+  spl(i) *= mGain;
+  i += 1;
+);

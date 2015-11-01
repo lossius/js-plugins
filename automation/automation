@@ -1,0 +1,259 @@
+desc: Automation Easing Function Generator
+
+slider1:0.5<0., 1, 0.0001>Automated Slider Value
+slider2:4000<100,90000,1>Min. Easing mInterval (ms)
+slider3:6000<100,90000,1>Max. Easing mInterval (ms)
+slider4:0<0,30,1{Linear Interpolation, Quadratic Ease In, Quadratic Ease Out, Quadratic Ease InOut, Cubic Ease In, Cubic Ease Out, Cubic Ease InOut, Quartic Ease In, Quartic Ease Out, Quartic Ease InOut, Quintic Ease In, Quintic Ease Out, Quintic Ease InOut, Sine Ease In, Sine Ease Out, Sine Ease InOut, Circular Ease In, Circular Ease Out, Circular Ease InOut, Exponential EaseIn, Exponential EaseOut, Exponential Ease InOut, Elastic Ease In, Elastic Ease Out, Elastic Ease InOut, Back Ease In, Back Ease Out, Back Ease InOut, Bounce Ease In, Bounce Ease Out, Bounce Ease InOut}>Easing Function
+slider5:0.5<0,1,1{Fixed,Random}>Range mode
+
+@init
+
+rangeMin = 4000;
+rangeMax = 6000;
+
+mInterval = 5000;
+
+mPrevY = 0.5;
+mNextY = 0.5;
+
+mNextTargetSampTime = 0;
+
+
+function ease(x) local(f)
+(  
+  (easeFunction == 0) ? ( // LinearInterpolation
+    x;
+  ) : (
+    
+    (easeFunction == 1) ? ( // QuadraticEaseIn
+      x * x;
+    ) : (
+
+      (easeFunction == 2) ? ( // QuadraticEaseOut
+        -(x * (x - 2));
+      ) : (
+
+        (easeFunction == 3) ? ( // QuadraticEaseInOut
+          (x < 0.5) ? (
+            2 * x * x;
+          ) : (
+            (-2 * x * x) + (4 * x) - 1;
+          )
+        ) : (
+
+          (easeFunction == 4) ? ( // CubicEaseIn
+            x * x * x;
+          ) : (
+
+            (easeFunction == 5) ? ( // CubicEaseOut
+              f = (x - 1);
+              f * f * f + 1;
+            ) : (
+
+              (easeFunction == 6) ? ( // CubicEaseInOut
+                (x < 0.5) ? (
+                  4 * x * x * x;
+                ) : (
+                  f = ((2 * x) - 2);
+                  0.5 * f * f * f + 1;
+                );
+              ) : (
+                
+                (easeFunction == 7) ? ( // QuarticEaseIn
+                  x * x * x * x;
+                ) : (
+                  
+                  (easeFunction == 8) ? ( // QuarticEaseOut
+                    f = (x - 1);
+                    f * f * f * (1 - x) + 1;
+                  ) : (
+                    
+                    (easeFunction == 9) ? ( // QuarticEaseInOut
+                      (x < 0.5) ? (
+                        8 * x * x * x * x;
+                      ) : (
+                    		f = (x - 1);
+                    		return -8 * f * f * f * f + 1;
+                      );
+                    ) : (
+                      
+                      (easeFunction == 10) ? ( // QuinticEaseIn
+                        x * x * x * x * x;
+                      ) : (
+                        
+                        (easeFunction == 11) ? ( // QuinticEaseOut
+                          f = (x - 1);
+                          f * f * f * f * f + 1;
+                        ) : (
+                          
+                          (easeFunction == 12) ? ( // QuinticEaseInOut
+                            (x < 0.5) ? (
+                              16 * x * x * x * x * x;
+                            ) : (
+                              f = ((2 * x) - 2);
+                              0.5 * f * f * f * f * f + 1;
+                            );
+                          ) : (
+                            
+                            (easeFunction == 13) ? ( // SineEaseIn
+                              sin((x - 1) * $pi * 0.5) + 1;
+                            ) : (
+                              
+                              (easeFunction == 14) ? ( // SineEaseOut
+                                sin(x * $pi * 0.5);
+                              ) : (
+                                
+                                (easeFunction == 15) ? ( // sineEaseInOut
+                                  0.5 * (1 - cos(x * $pi));
+                                ) : (
+                                  
+                                  (easeFunction == 16) ? ( // CircularEaseIn
+                                    1 - sqrt(1 - (x * x));
+                                  ) : (
+                                    
+                                    (easeFunction == 17) ? ( // CircularEaseOut
+                                      sqrt((2 - x) * x);
+                                    ) : (
+                                      
+                                      (easeFunction == 18) ? ( // CircularEaseInOut
+                                        (x < 0.5) ? (
+                                          0.5 * (1 - sqrt(1 - 4 * (x * x)));
+                                        ) : (
+                                          0.5 * (sqrt(-((2 * x) - 3) * ((2 * x) - 1)) + 1);
+                                        );
+                                        
+                                      ) : (
+                                        (easeFunction == 19) ? ( // ExponentialEaseIn
+                                          (x == 0.0) ? x : pow(2, 10 * (x - 1));
+                                        ) : (
+                                          
+                                          (easeFunction == 20) ? ( // ExponentialEaseOut
+                                            (x == 1.0) ? x : 1 - pow(2, -10 * x);
+                                          ) : (
+                                            
+                                            (easeFunction == 21) ? ( // ExponentialEaseInOut
+                                              (x == 0.0 || x == 1.0) ? p : (
+                                                (x < 0.5) ? (
+                                                  0.5 * pow(2, (20 * x) - 10);
+                                                ) : (
+                                                  -0.5 * pow(2, (-20 * x) + 10) + 1;
+                                                );
+                                              );
+	                                          ) : (
+                                                
+                                              (easeFunction == 22) ? ( // ElasticEaseIn
+                                                sin(13 * $pi * 0.5 * x) * pow(2, 10 * (x - 1));
+                                              ) : (
+                                                
+                                                (easeFunction == 23) ? ( // ElasticEaseOut
+                                                  sin(-13 * $pi * 0.5 * (x + 1)) * pow(2, -10 * x) + 1;
+                                                ) : (
+                                                  
+                                                  (easeFunction == 24) ? ( // ElasticEaseInOut
+                                                    (x < 0.5) ? (
+                                                      0.5 * sin(13 * $pi * 0.5 * (2 * x)) * pow(2, 10 * ((2 * x) - 1));
+                                                    ) : (
+                                                      0.5 * (sin(-13 * $pi * 0.5 * ((2 * x - 1) + 1)) * pow(2, -10 * (2 * x - 1)) + 2);
+                                                    );
+                                                  ) : (
+                                                    
+                                                    (easeFunction == 25) ? ( // BackEaseIn
+                                                      x * x * x - x * sin(x * $pi);
+                                                    ) : (
+                                                      
+                                                      (easeFunction == 26) ? ( // BackEaseOut
+                                                        f = (1 - x);
+                                                        1 - (f * f * f - f * sin(f * $pi));
+                                                      ) : (
+                                                        
+                                                        (easeFunction == 27) ? ( // BackEaseInOut
+                                                          (x < 0.5) ? (
+                                                            f = 2 * x;
+                                                            0.5 * (f * f * f - f * sin(f * $pi));
+                                                          ) : (
+                                                          	f = (1 - (2*x - 1));
+                                                          	0.5 * (1 - (f * f * f - f * sin(f * $pi))) + 0.5;
+                                                          );
+                                                        );
+                                                      );
+                                                    );
+                                                  );
+                                                );
+                                              );
+                                            );
+                                          );
+                                        );
+                                      );
+                                    );
+                                  );
+                                );
+                              );
+                            );
+                          );
+                        );
+                      );
+                    );
+                  );
+                );
+              );
+            );
+          );
+        );
+      );
+    );
+  );
+);
+
+/********************************************************************
+Updated slider values
+********************************************************************/
+@slider
+
+(slider2 < slider3) ? (
+  rangeMin = slider2;
+  rangeMax = slider3;
+) :
+( rangeMin = slider3;
+  rangeMax = slider2;
+);
+
+easeFunction = slider4;
+
+
+@block
+
+slider1 = mPrevY + (mNextY-mPrevY) * ease(mNextX);
+slider_automate(slider1);
+
+
+// Prepare for next block:
+mNextTargetSampTime -= samplesblock;
+
+// Are we reaching the end of the ramp during the upcoming block?
+(mNextTargetSampTime <= 0) ? (
+  
+  // If so, schedule new target
+  
+  // TODO: Gjør denne slik at den følger midi-distribusjon i tid
+  mInterval = rand(rangeMax - rangeMin) + rangeMin;
+  
+  mIncX = 1. / (mInterval * 0.001 * srate);
+  mNextX = (samplesblock - mNextTargetSampTime) * mIncX;
+  mNextTargetSampTime = mInterval * 0.001 * srate + mNextTargetSampTime;
+
+  mPrevY = mNextY;
+  mNextY = rand(1.);
+
+) : (
+  mNextX += mIncX * samplesblock;
+);
+
+
+
+
+/********************************************************************
+No sample processing, this plugin just geenrate automation curves 
+to be used by other plugins
+********************************************************************/
+@sample
+

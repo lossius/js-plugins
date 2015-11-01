@@ -15,7 +15,7 @@ Download and install:
 Changelog
 ---------
 
-* 2015-11-01: Repurposing this repo for general JSFX plugins. Ambisonic plugins have maintained as [Ambisonic Toolkit for Reaper](http://www.ambisonictoolkit.net).
+* 2015-11-01: Repurposing this repo for general JSFX plugins. Ambisonic plugins are now maintained as [Ambisonic Toolkit for Reaper](http://www.ambisonictoolkit.net).
 
 
 Licenses and credits

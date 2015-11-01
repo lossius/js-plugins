@@ -1,0 +1,84 @@
+/*
+Copyright (c) 2015, Trond Lossius.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+/************************************************************************
+ Setup
+************************************************************************/
+desc: Multichannel Tremolo
+
+
+slider1:4<0,100,0.1>Frequency (Hz)
+slider2:50.<0.,100,0.1>Depth (%)
+slider3:0<0.,100., 0.1>Channel Seperation (%)
+
+// No in_pin or out_pin configurations, keeps number of channels flexible
+
+
+/************************************************************************
+ Initialisation
+************************************************************************/
+@init
+mIsInitialised = 0;
+
+
+/************************************************************************
+ Slider changes
+************************************************************************/
+@slider
+mNewAdvance  = $pi* 2 * slider1/srate;
+mNewDepth         = slider2 * 0.01;
+
+//sep=slider3*$pi;
+
+mNewSeparation = 0.01 * slider3 * $pi / num_ch;
+
+
+(mIsInitialised==0) ? (
+    mAdvance    = mNewAdvance; 
+    mDepth      = mNewDepth;     
+    mSeparation = mNewSeparation;
+	
+    mPosition = 0;
+    
+    mIsInitialised=1;
+);
+
+
+/************************************************************************
+ Block processing
+************************************************************************/
+@block
+
+mIncAdv   = (mNewAdvance    - mAdvance)    / samplesblock;
+mIncDepth = (mNewDepth      - mDepth)      / samplesblock;
+mIncSep   = (mNewSeparation - mSeparation) / samplesblock;
+
+
+/************************************************************************
+ Sample processing
+************************************************************************/
+@sample
+mAdvance    += mIncAdv;
+mDepth      += mIncDepth;
+mSeparation += mIncSep;
+
+mAmount = 1 - mDepth;
+
+i = 0;
+loop(num_ch,
+  spl(i) = spl(i)* ((cos(mPosition+i*mSeparation)) * mDepth + mAmount);
+  i += 1;
+);
+
+mPosition += mAdvance;

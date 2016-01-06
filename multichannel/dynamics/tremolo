@@ -15,12 +15,14 @@ Redistribution and use in source and binary forms, with or without modification,
 /************************************************************************
  Setup
 ************************************************************************/
-desc: Multichannel Tremolo
+desc: Sur Tremolo (Flexible Channels)
 
 
 slider1:4<0,100,0.1>Frequency (Hz)
-slider2:50.<0.,100,0.1>Depth (%)
+slider2:50.<0.,200,0.1>Depth (%)
 slider3:0<0.,100., 0.1>Channel Seperation (%)
+
+kTWOPI = 2*$pi;
 
 // No in_pin or out_pin configurations, keeps number of channels flexible
 
@@ -37,7 +39,7 @@ mIsInitialised = 0;
 ************************************************************************/
 @slider
 mNewAdvance  = $pi* 2 * slider1/srate;
-mNewDepth         = slider2 * 0.01;
+mNewDepth         = slider2 * 0.005;
 
 //sep=slider3*$pi;
 
@@ -77,8 +79,9 @@ mAmount = 1 - mDepth;
 
 i = 0;
 loop(num_ch,
-  spl(i) = spl(i)* ((cos(mPosition+i*mSeparation)) * mDepth + mAmount);
+  spl(i) = spl(i)* ((cos(mPosition+i*mSeparation) * mDepth) + mAmount);
   i += 1;
 );
 
 mPosition += mAdvance;
+(mPosition > kTWOPI) ? (mPosition -= kTWOPI);

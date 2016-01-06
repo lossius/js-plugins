@@ -1,4 +1,4 @@
-desc: Automation Easing Function Generator
+desc: Easing Function Generator for Automation
 
 slider1:0.5<0., 1, 0.0001>Automated Slider Value
 slider2:4000<100,90000,1>Min. Easing mInterval (ms)

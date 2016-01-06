@@ -11,10 +11,12 @@ Download and install:
 * On Mac, open the folder `~/Library/Application Support/REAPER/Effects`. In OSX 10.8 and later the Library folder might be hidden. If so, in Finder, hold down the ALT key while clicking the "Go" menu. This will cause the Library folder to show up as one of the folders in the menu.
 * On Windows you'll have to copy the unzipped folder in a similar way.
 * Copy the unzipped folder to the Effects folder, and (re)start Reaper.
+* Several plugins depends on [coocdsp](http://ajaxsoundstudio.com/software/cookdsp/). Please ensure that you have that library installed as well.
 
 Changelog
 ---------
 
+* 2016-01-06: This library now depends on the awesome [coocdsp](http://ajaxsoundstudio.com/software/cookdsp/).
 * 2015-11-01: Repurposing this repo for general JSFX plugins. Ambisonic plugins are now maintained as [Ambisonic Toolkit for Reaper](http://www.ambisonictoolkit.net).
 
 

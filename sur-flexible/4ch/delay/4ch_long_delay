@@ -1,0 +1,73 @@
+/*
+ This plug is based on example code from cookdsp.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+/************************************************************************
+ Setup
+************************************************************************/
+desc:Surround 4ch Long Delay and Feedback
+
+slider1:2500<1,30000>Delay Time (ms)
+slider2:0<-1,1>Feedback
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+import cookdsp.jsfx-inc
+
+
+/************************************************************************
+ Initialisation
+************************************************************************/
+@init
+// 30 seconds stereo delay line
+d0.delay(srate*30);
+d1.delay(srate*30);
+d2.delay(srate*30);
+d3.delay(srate*30);
+
+
+/************************************************************************
+ Slider changes
+************************************************************************/
+@slider
+// delay time in samples
+samps = slider1 * 0.001 * srate;
+
+
+/************************************************************************
+ Block processing
+************************************************************************/  
+@sample
+
+// read with cubic interpolation
+val0 = d0.delay_read3(samps);
+val1 = d1.delay_read3(samps);
+val2 = d2.delay_read3(samps);
+val3 = d3.delay_read3(samps);
+
+// write values in delay lines 
+d0.delay_write(spl0 + val0 * slider2);
+d1.delay_write(spl1 + val1 * slider2);
+d2.delay_write(spl2 + val2 * slider2);
+d3.delay_write(spl3 + val3 * slider2);
+
+// sum and output
+spl0 = (spl0 + val0) * 0.5;
+spl1 = (spl1 + val1) * 0.5;
+spl2 = (spl2 + val2) * 0.5;
+spl3 = (spl3 + val3) * 0.5;

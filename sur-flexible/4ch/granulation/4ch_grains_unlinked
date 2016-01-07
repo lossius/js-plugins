@@ -1,0 +1,71 @@
+*
+ This plug is based on example code from cookdsp.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+desc:Surround 4ch Simple Granulator (Unlinked)
+
+slider1:10<0,20,0.001>Reading Position (s)
+slider2:0<-24.,24.,0.01>Transposition (MIDI)
+slider3:24<1,64,1>Number Of Grains
+slider4:100<1,3500,1>Grain Duration (ms)
+slider5:0.1<0,1>Random Position
+slider6:0.1<0,1>Random Transposition
+slider7:0<0,1,1{Playing,Recording}>Play/Record Mode
+slider8:0<0,20,0.001>Monitor Recording Position (s)
+
+import cookdsp.jsfx-inc
+
+@init
+kBufLen = 20;
+kBufLenInv = 1./ kBufLen;
+kSrateInv = 1. / srate;
+// Initializes 4 granulators with an internal memory of 10 seconds.
+buf0 = gr0.grains(num, pitch, pos, dur, pitrnd, posrnd, kBufLen);
+buf1 = gr1.grains(num, pitch, pos, dur, pitrnd, posrnd, kBufLen);
+buf2 = gr2.grains(num, pitch, pos, dur, pitrnd, posrnd, kBufLen);
+buf3 = gr3.grains(num, pitch, pos, dur, pitrnd, posrnd, kBufLen);
+
+@slider
+pos = slider1*kBufLenInv;
+pitch = pow(2,(slider2/12.));
+num = slider3;
+dur = slider4*0.001;
+posrnd = slider5;
+pitrnd = slider6;
+// Sets all parameters at once.
+gr0.grains_set(num, pitch, pos, dur, pitrnd, posrnd);
+gr1.grains_set(num, pitch, pos, dur, pitrnd, posrnd);
+gr2.grains_set(num, pitch, pos, dur, pitrnd, posrnd);
+gr3.grains_set(num, pitch, pos, dur, pitrnd, posrnd);
+// We need to record some samples in memory to be able to granulate them.
+gr0.grains_record(slider7);
+gr1.grains_record(slider7);
+gr2.grains_record(slider7);
+gr3.grains_record(slider7);
+
+@block
+((gr0.record == 0) && (slider7 == 1)) ? (
+    slider7 = 0;
+    sliderchange(slider7);
+);
+tmp_ = gr0.recpos * kSrateInv;
+(tmp_ != slider8) ? (
+    slider8 = tmp_;
+    sliderchange(slider8);
+);
+
+@sample
+// Only output signal when in playing state.
+play_state == 1 ? (
+    spl0 = gr0.grains_do(spl0); 
+    spl1 = gr1.grains_do(spl1);
+    spl2 = gr2.grains_do(spl2); 
+    spl3 = gr3.grains_do(spl3);
+);

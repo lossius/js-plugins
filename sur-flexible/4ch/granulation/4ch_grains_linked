@@ -1,0 +1,67 @@
+desc:Surround 4ch Simple Granulator (Linked)
+
+slider1:10<0,20,0.001>Reading Position (s)
+slider2:0<-24.,24.,0.01>Transposition (MIDI)
+slider3:24<1,64,1>Number Of Grains
+slider4:100<1,3500,1>Grain Duration (ms)
+slider5:0.1<0,1>Random Position
+slider6:0.1<0,1>Random Transposition
+slider7:0<0,1,1{Playing,Recording}>Play/Record Mode
+slider8:0<0,20,0.001>Monitor Recording Position (s)
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+import cookdsp.jsfx-inc
+import FOA-granulator.jsfx-inc
+
+@init
+kBufLen = 20;
+kBufLenInv = 1./ kBufLen;
+kSrateInv = 1. / srate;
+// Initializes granulator with an internal memory of 20 seconds.
+buf = foagrain.foa_grains(num, pitch, pos, dur, pitrnd, posrnd, kBufLen);
+
+
+@slider
+pos = slider1*kBufLenInv;
+pitch = pow(2,(slider2/12.));
+num = slider3;
+dur = slider4*0.001;
+posrnd = slider5;
+pitrnd = slider6;
+
+// Sets all parameters at once.
+foagrain.foa_grains_set(num, pitch, pos, dur, pitrnd, posrnd);
+
+// We need to record some samples in memory to be able to granulate them.
+foagrain.foa_grains_record(slider7);
+
+@block
+((foagrain.record == 0) && (slider7 == 1)) ? (
+    slider7 = 0;
+    sliderchange(slider7);
+);
+tmp_ = foagrain.recpos * kSrateInv;
+(tmp_ != slider8) ? (
+    slider8 = tmp_;
+    sliderchange(slider8);
+);
+
+
+@sample
+// Only output signal when in playing state.
+play_state == 1 ? (
+    tmp_ = foagrain.foa_grains_do(spl0, spl1, spl2, spl3); 
+    spl0 = tmp_[0];
+    spl1 = tmp_[1];
+    spl2 = tmp_[2];
+    spl3 = tmp_[3];
+);

@@ -330,3 +330,308 @@ function foa_grains_do(signal0, signal1, signal2, signal3)
     this.sigout[3] = tmp3_;
     this.sigout;
 );
+
+/******************************************************* 
+FOA_RTGRAINS
+============
+
+Simple first order ambisonics granular synthesis generator.
+
+Description
+-----------
+
+The `foa_rtgrains` object implements a 4 channel synchronous granular 
+synthesis on incoming audio buffered continuously onto a cycling buffer.
+There will be `num` grains with their starting point equally spaced 
+in time over the duration specified with the `dur` parameter. It uses
+an internal tuckey window function as the grain envelope. Four channels
+of audio are buffered, and the granulator produce four-channel grains.
+This makes it well suited for granulation of first order ambisonic
+A-format and B-format signals.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### foa_rtgrains(num, pitch, pos, dur, pitrnd, posrnd, buflen) ####
+
+The `foa_rtgrains` function initializes a synchronous granular synthesis
+generator. It provides control over the number of overlapped grains
+(`num`), the overall transposition (`pitch`), the position of the
+playback pointer (`pos`), normalized between 0 and 1 and the duration,
+in seconds, of the grains (`dur`). The arguments `pitrnd` and `posrnd`
+control the amount of random applied to the pitch and the playback 
+position of each grain (regardless of the values of the other grains).
+These arguments are normalized between 0 and 1. The `buf` argument
+is the length of the internal memory, in seconds, allocated at 
+initialization time. This space will be used as a cyclic buffer for
+incoming samples to be granulated.
+
+Methods
+-------
+
+#### foa_rtgrains_set(num, pitch, pos, dur, pitrnd, posrnd) ####
+
+Sets all parameters at once. See other methods for more details.
+
+#### foa_rtgrains_set_num(num) ####
+
+Sets a new number of overlapped grains `num`. The maximum number of
+grains is 128.
+
+#### foa_rtgrains_set_pitch(pitch) ####
+
+Sets a new transposition factor `pitch` (1 means no transposition).
+
+#### foa_rtgrains_set_pos(pos) ####
+
+Sets a new playback position `pos`, normalized between 0 (beginning) 
+and 1 (end), into the recording chunk.
+
+#### foa_rtgrains_set_dur(dur) ####
+
+Sets a new grain duration `dur`, in seconds.
+
+#### foa_rtgrains_set_pitrnd(pitrnd) ####
+
+Sets a new pitch random factor, between 0 (no transposition) and 1
+(full range random transposition).
+
+#### foa_rtgrains_set_posrnd(posrnd) ####
+
+Sets a new position random factor, between 0 (no deviation) and 1
+(full range random deviation).
+
+#### foa_rtgrains_do(signal) ####
+
+Processes one 4-channel samples of an input signal `signal` 
+and outputs the processed sample.
+
+Example
+-------
+
+    desc:Surround 4ch Simple Granulator
+
+    slider1:24<1,64,1>Number Of Grains
+    slider2:0<-24.,24.,0.01>Transposition
+    slider3:0.5<0,1>Reading Position
+    slider4:0.1<0.01,0.5>Grain Duration
+    slider5:0.1<0,1>Random Transposition
+    slider6:0.1<0,1>Random Position
+    slider7:0<0,1,1{Playing,Recording}>Play/Record Mode
+
+    in_pin:1
+    in_pin:2
+    in_pin:3
+    in_pin:4
+    
+    out_pin:1
+    out_pin:2
+    out_pin:3
+    out_pin:4
+
+    import cookdsp.jsfx-inc
+
+    @init
+    // Initializes 2 granulators with an internal memory of 10 seconds.
+    bufL = grL.foa_rtgrains(slider1, slider2, slider3, slider4, slider5, slider6, 10);
+    bufR = grR.foa_rtgrains(slider1, slider2, slider3, slider4, slider5, slider6, 10);
+
+    @slider
+    speed = pow(2,(slider2/12.));
+    // Sets all parameters at once.
+    grL.foa_rtgrains_set(slider1, speed, slider3, slider4, slider5, slider6);
+    grR.foa_rtgrains_set(slider1, speed, slider3, slider4, slider5, slider6);
+
+    @sample
+    // Only output signal when in playing state.
+    play_state == 1 ? (
+        tmp_ = grL.foa_rtgrains_do(spl0, spl1, spl2, spl3); 
+        spl0 = tmp_[0];
+        spl1 = tmp_[1];
+        spl2 = tmp_[2];
+        spl3 = tmp_[3];
+    );
+
+********************************************************/
+
+// Private functions
+function _foa_rtgrains_init_memories()
+(
+    this.startpos = memalloc(128);
+    this.gsize = memalloc(128);
+    this.gphase = memalloc(128);
+    this.lastpos = memalloc(128);
+);
+
+function _foa_rtgrains_reset_memories()
+(
+    memset(this.startpos, 0, 128);
+    memset(this.gsize, 0, 128);
+    memset(this.gphase, 0, 128);
+    memset(this.lastpos, 0, 128);
+);
+
+function _foa_rtgrains_compute_phase_inc()
+(
+    this.dur == 0 ? durtosamps_ = 0 : durtosamps_ = (1 / this.dur) / srate;
+    this.inc = this.pitch * durtosamps_;
+);
+
+// grains setter functions
+function foa_rtgrains_set_num(num)
+(
+    num != this.num ? (
+        num > 128 ? num = 128;
+        this.num = num;
+        num <= 24 ? (
+            this.gain = pow(10, -num/2 * 0.05);
+        ) : (
+            this.gain = pow(10, -12 * 0.05);
+        );
+        this._foa_rtgrains_reset_memories();
+        nc_ = 0;
+        loop(num,
+            ph_ = (nc_/num) * (1.0 + (rand(2)-1) * 0.01); // TODO: Why the last part of this? It just seems to offset the phase of some of the grains by 1%.
+            ph_ < 0 ? ph_ = 0 : ph_ >= 1 ? ph_ -= 1;
+            this.gphase[nc_] = ph_;
+            this.lastpos[nc_] = 1;
+            nc_ += 1;
+        );
+    );
+);
+
+function foa_rtgrains_set_pitch(pitch)
+(
+    pitch != this.pitch ? (
+        this.pitch = pitch;
+        this._foa_rtgrains_compute_phase_inc();
+    );
+);
+
+/*
+function foa_rtgrains_set_pos(pos)
+(
+    pos < 0 ? pos = 0 : pos > 1 ? pos = 1;
+    this.pos = pos;
+);
+*/
+
+function foa_rtgrains_set_dur(dur)
+(
+    dur != this.dur ? (
+        this.dur = dur;
+        this._foa_rtgrains_compute_phase_inc();
+    );
+);
+
+function foa_rtgrains_set_pitrnd(pitrnd)
+(
+    pitrnd < 0 ? pitrnd = 0 : pitrnd > 1 ? pitrnd = 1;
+    this.pitrnd = pow(pitrnd, 3) * 0.5;
+);
+
+function foa_rtgrains_set_posrnd(posrnd)
+(
+    posrnd < 0 ? posrnd = 0 : posrnd > 1 ? posrnd = 1;
+    this.posrnd = pow(posrnd, 3) * 0.5;
+);
+
+//function foa_rtgrains_set(num pitch pos dur pitrnd posrnd)
+function foa_rtgrains_set(num pitch dur pitrnd posrnd)
+(
+    this.foa_rtgrains_set_num(num);   
+    this.foa_rtgrains_set_pitch(pitch); 
+    //this.foa_rtgrains_set_pos(pos);   
+    this.foa_rtgrains_set_dur(dur);   
+    this.foa_rtgrains_set_pitrnd(pitrnd);
+    this.foa_rtgrains_set_posrnd(posrnd);
+);
+
+// grains initializer
+//function foa_rtgrains(num pitch pos dur pitrnd posrnd buflen)
+function foa_rtgrains(num pitch dur pitrnd posrnd buflen)
+(
+    this.buflen = srate*buflen;
+    bufloc_ = memalloc(4);
+    bufloc_[0] = this.buf0.buffer(this.buflen);
+    bufloc_[1] = this.buf1.buffer(this.buflen);
+    bufloc_[2] = this.buf2.buffer(this.buflen);
+    bufloc_[3] = this.buf3.buffer(this.buflen);
+    this.sigout = memalloc(4);
+    this.env.buffer(1024); this.env.buffer_window(6);
+    this.foa_rtgrains_set_pitch(pitch);
+    //this.foa_rtgrains_set_pos(pos);
+    this.foa_rtgrains_set_dur(dur);
+    this.foa_rtgrains_set_pitrnd(pitrnd);
+    this.foa_rtgrains_set_posrnd(posrnd);
+    this._foa_rtgrains_init_memories();
+    this.foa_rtgrains_set_num(num);
+    this.phase = this.reclen = this.sum = this.recpos = 0;
+    this.playpos = this.bufnumsamples /2;
+    bufloc_; // return buffer location into the global memory
+);
+
+function foa_rtgrains_do(signal0, signal1, signal2, signal3)
+(
+    // record input signal onto cyclic buffer
+    // end point interpolation is handled by buffer_write()
+    this.buf0.buffer_write(this.recpos, signal0);
+    this.buf1.buffer_write(this.recpos, signal1);
+    this.buf2.buffer_write(this.recpos, signal2);
+    this.buf3.buffer_write(this.recpos, signal3);
+    this.recpos += 1;
+    this.recpos >= this.buflen ? this.recpos = 0;
+    this.playpos += 1;
+    this.playpos >= this.buflen ? this.playpos = 0;
+    
+    // granulate recorded signal
+    tmp0_ = 0;
+    tmp1_ = 0;
+    tmp2_ = 0;
+    tmp3_ = 0;
+    nc_ = 0;
+    loop(this.num,
+        ppos_ = this.phase + this.gphase[nc_];
+        ppos_ >= 1 ? ppos_ -= 1;
+        amp_ = this.env.buffer_fnread2(ppos_);
+        ppos_ < this.lastpos[nc_] ? (
+            // Trigger new grain
+            len_ = this.buflen;
+            this.gsize[nc_] = this.dur * srate;
+            // Introduce pitch variation between grains by making singular grains cover more or less samples
+            this.gsize[nc_] *= 1 + (rand(2)-1) * this.pitrnd; 
+            this.startpos[nc_] = this.playpos; // FIXME this.playpos is in samples already so no need for multiplications
+            // Randomize grain start location
+            this.startpos[nc_] += (rand(2)-1) * this.posrnd * this.buflen;
+            this.startpos[nc_] < 0 ? (
+                this.startpos[nc_] += len_;
+            ) : this.startpos[nc_] >=  len_ ? (
+                this.startpos[nc_] -=  len_;
+            );
+        );
+        this.lastpos[nc_] = ppos_;
+        index_ = ppos_ * this.gsize[nc_] + this.startpos[nc_];
+        index_ >= len_ ? index_ -= len_;
+        tmp0_ += this.buf0.buffer_fread2(index_) * amp_;
+        tmp1_ += this.buf1.buffer_fread2(index_) * amp_;
+        tmp2_ += this.buf2.buffer_fread2(index_) * amp_;
+        tmp3_ += this.buf3.buffer_fread2(index_) * amp_;
+        nc_ += 1;
+    );
+    tmp0_ *= this.gain;
+    tmp1_ *= this.gain;
+    tmp2_ *= this.gain;
+    tmp3_ *= this.gain;
+    this.phase += this.inc;
+    this.phase < 0 ? this.phase += 1 : this.phase >= 1 ? this.phase -= 1;
+
+
+    // Returns a vector of four samples
+    this.sigout[0] = tmp0_;
+    this.sigout[1] = tmp1_;
+    this.sigout[2] = tmp2_;
+    this.sigout[3] = tmp3_;
+    this.sigout;
+);

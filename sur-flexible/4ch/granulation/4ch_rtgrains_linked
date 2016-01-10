@@ -1,0 +1,62 @@
+*
+ This plug is based on example code from cookdsp.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+desc:Surround 4ch RealTime Granulator (Linked)
+
+slider1:0<-24.,24.,0.01>Transposition (MIDI)
+slider2:24<1,64,1>Number Of Grains
+slider3:100<1,3500,1>Grain Duration (ms)
+slider4:0.1<0,1>Random Position
+slider5:0.1<0,1>Random Transposition
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+import cookdsp.jsfx-inc
+import FOA-granulator.jsfx-inc
+
+@init
+kBufLen = 20;
+kBufLenInv = 1./ kBufLen;
+kSrateInv = 1. / srate;
+// Initializes granulator with an internal memory of 20 seconds.
+buf = foartgrain.foa_rtgrains(num, pitch, dur, pitrnd, posrnd, kBufLen);
+
+
+@slider
+pitch = pow(2,(slider1/12.));
+num = slider2;
+dur = slider3*0.001;
+posrnd = slider4;
+pitrnd = slider5;
+
+// Sets all parameters at once.
+foartgrain.foa_rtgrains_set(num, pitch, dur, pitrnd, posrnd);
+
+
+@sample
+// Only output signal when in playing state.
+play_state == 1 ? (
+    tmp_ = foartgrain.foa_rtgrains_do(spl0, spl1, spl2, spl3); 
+    spl0 = tmp_[0];
+    spl1 = tmp_[1];
+    spl2 = tmp_[2];
+    spl3 = tmp_[3];
+);
+
+// TODO: Endre Random Position til å være angitt som tid heller enn relativt til grainsize

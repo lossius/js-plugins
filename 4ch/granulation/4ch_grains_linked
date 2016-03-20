@@ -9,7 +9,7 @@
  "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
 */
 
-desc:Surround 4ch Simple Granulator (Linked)
+desc:4ch Simple Granulator - Linked (Trond)
 
 slider1:10<0,20,0.001>Reading Position (s)
 slider2:0<-24.,24.,0.01>Transposition (MIDI)
@@ -58,7 +58,7 @@ foagrain.foa_grains_record(slider7);
 @block
 ((foagrain.record == 0) && (slider7 == 1)) ? (
     slider7 = 0;
-    sliderchange(slider7);
+    slider_automate(slider7);
 );
 tmp_ = foagrain.recpos * kSrateInv;
 (tmp_ != slider8) ? (

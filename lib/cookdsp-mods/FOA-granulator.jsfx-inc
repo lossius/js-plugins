@@ -569,7 +569,7 @@ function foa_rtgrains(num pitch dur pitrnd posrnd buflen)
     this._foa_rtgrains_init_memories();
     this.foa_rtgrains_set_num(num);
     this.phase = this.reclen = this.sum = this.recpos = 0;
-    this.playpos = this.bufnumsamples /2;
+    this.playpos = this.buflen /2;
     bufloc_; // return buffer location into the global memory
 );
 

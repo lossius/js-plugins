@@ -9,7 +9,7 @@
  "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
 */
 
-desc:Surround 4ch Simple Granulator (Unlinked)
+desc:4ch Simple Granulator - Unlinked (Trond)
 
 slider1:10<0,20,0.001>Reading Position (s)
 slider2:0<-24.,24.,0.01>Transposition (MIDI)
@@ -53,7 +53,7 @@ gr3.grains_record(slider7);
 @block
 ((gr0.record == 0) && (slider7 == 1)) ? (
     slider7 = 0;
-    sliderchange(slider7);
+    slider_automate(slider7);
 );
 tmp_ = gr0.recpos * kSrateInv;
 (tmp_ != slider8) ? (

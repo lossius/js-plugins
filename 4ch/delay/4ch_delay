@@ -12,9 +12,9 @@
 /************************************************************************
  Setup
 ************************************************************************/
-desc:Surround 4ch Long Delay and Feedback
+desc:4ch Delay and Feedback (Trond)
 
-slider1:2500<1,30000>Delay Time (ms)
+slider1:250<1,1000>Delay Time (ms)
 slider2:0<-1,1>Feedback
 
 in_pin:1
@@ -34,11 +34,11 @@ import cookdsp.jsfx-inc
  Initialisation
 ************************************************************************/
 @init
-// 30 seconds stereo delay line
-d0.delay(srate*30);
-d1.delay(srate*30);
-d2.delay(srate*30);
-d3.delay(srate*30);
+// one second stereo delay line
+d0.delay(srate);
+d1.delay(srate);
+d2.delay(srate);
+d3.delay(srate);
 
 
 /************************************************************************

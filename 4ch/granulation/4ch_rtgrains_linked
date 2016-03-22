@@ -28,7 +28,7 @@ out_pin:3
 out_pin:4
 
 import cookdsp.jsfx-inc
-import FOA-granulator.jsfx-inc
+import 4ch-granulator.jsfx-inc
 
 @init
 kBufLen = 20;

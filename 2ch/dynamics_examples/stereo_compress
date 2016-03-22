@@ -1,0 +1,31 @@
+desc: Stereo Dynamics - Compression - Unlinked Channels (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:-30<-70,0>Threshold (dB)
+slider2:4<1,20>Ratio
+slider3:10<1,150>Attack Time (ms)
+slider4:100<1,250>Release Time (ms)
+slider5:5<0.5,10>Look Ahead (ms)
+slider6:0<-6,18>Post Gain
+
+@init
+cL.compress(slider1, slider2, slider3, slider4, slider5);
+cR.compress(slider1, slider2, slider3, slider4, slider5);
+
+@slider
+cL.compress_set_thresh(slider1);
+cR.compress_set_thresh(slider1);
+cL.compress_set_ratio(slider2);
+cR.compress_set_ratio(slider2);
+cL.compress_set_attack(slider3);
+cR.compress_set_attack(slider3);
+cL.compress_set_release(slider4);
+cR.compress_set_release(slider4);
+cL.compress_set_lookahead(slider5);
+cR.compress_set_lookahead(slider5);
+gain = pow(10, slider6 * 0.05);
+
+@sample
+spl0 = cL.compress_do(spl0) * gain;
+spl1 = cR.compress_do(spl1) * gain;

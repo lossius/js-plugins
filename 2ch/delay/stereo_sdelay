@@ -1,0 +1,31 @@
+desc:Stereo Delay - Smooth + Feedback (cookdsp)
+
+slider1:250<1,1000>Delay Time (ms)
+slider2:0<-1,1>Feedback
+slider3:100<1,250>Crossfade Time (ms)
+
+import cookdsp.jsfx-inc
+
+@init
+// one second stereo delay line
+xfade = slider3 * 0.001 * srate;
+d0.sdelay(srate, xfade);
+d1.sdelay(srate, xfade);
+
+@slider
+// delay time in samples
+samps = slider1 * 0.001 * srate;
+xfade = slider3 * 0.001 * srate;
+d0.sdelay_set_xfade(xfade);
+d1.sdelay_set_xfade(xfade);
+  
+@sample
+// read with cubic interpolation
+val0 = d0.sdelay_read2(samps);
+val1 = d1.sdelay_read2(samps);
+// write values in delay lines 
+d0.sdelay_write(spl0 + val0 * slider2);
+d1.sdelay_write(spl1 + val1 * slider2);
+// sum and output
+spl0 = (spl0 + val0) * 0.5;
+spl1 = (spl1 + val1) * 0.5;

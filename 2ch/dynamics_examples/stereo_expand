@@ -1,0 +1,31 @@
+desc:Stereo Dynamics - Expansion - Unlinked Channels (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:-20<-70,0>Upper Threshold (dB)
+slider2:-40<-70,0>Lower Threshold (dB)
+slider3:2<1,8>Ratio
+slider4:25<1,150>Attack Time (ms)
+slider5:50<1,250>Release Time (ms)
+slider6:-6<-18,6>Post Gain
+
+@init
+cL.expand(slider1, slider2, slider3, slider4, slider5, 5);
+cR.expand(slider1, slider2, slider3, slider4, slider5, 5);
+
+@slider
+cL.expand_set_upthresh(slider1);
+cR.expand_set_upthresh(slider1);
+cL.expand_set_downthresh(slider2);
+cR.expand_set_downthresh(slider2);
+cL.expand_set_ratio(slider3);
+cR.expand_set_ratio(slider3);
+cL.expand_set_attack(slider4);
+cR.expand_set_attack(slider4);
+cL.expand_set_release(slider5);
+cR.expand_set_release(slider5);
+gain = pow(10, slider6 * 0.05);
+
+@sample
+spl0 = cL.expand_do(spl0) * gain;
+spl1 = cR.expand_do(spl1) * gain;

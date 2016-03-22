@@ -1,0 +1,27 @@
+desc:Stereo Dynamics - Compression - Linked Channels (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:-30<-70,0>Threshold (dB)
+slider2:4<1,20>Ratio
+slider3:10<1,150>Attack Time (ms)
+slider4:100<1,250>Release Time (ms)
+slider5:5<0.5,10>Look Ahead (ms)
+slider6:0<-6,18>Post Gain
+
+@init
+comp.stcomp(slider1, slider2, slider3, slider4, slider5);
+
+@slider
+comp.stcomp_set_thresh(slider1);
+comp.stcomp_set_ratio(slider2);
+comp.stcomp_set_attack(slider3);
+comp.stcomp_set_release(slider4);
+comp.stcomp_set_lookahead(slider5);
+gain = pow(10, slider6 * 0.05);
+
+@sample
+comp.stcomp_do(spl0, spl1);
+spl0 = comp.out0 * gain;
+spl1 = comp.out1 * gain;
+ 

@@ -1,0 +1,24 @@
+desc:Stereo FX - Reverberation Simple (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:0.75<0,1>Feedback
+slider2:5000<200,10000>Cutoff
+slider3:0.25<0,1>Balance
+slider4:0.3<0,1>Post-Gain
+
+@init
+revL.wgverb(slider1, slider2, slider3);
+revR.wgverb(slider1, slider2, slider3);
+
+@slider
+revL.wgverb_set_feed(slider1);
+revR.wgverb_set_feed(slider1);
+revL.wgverb_set_cutoff(slider2);
+revR.wgverb_set_cutoff(slider2);
+revL.wgverb_set_bal(slider3);
+revR.wgverb_set_bal(slider3);
+
+@sample
+spl0 = revL.wgverb_do(spl0) * slider4; 
+spl1 = revR.wgverb_do(spl1) * slider4;

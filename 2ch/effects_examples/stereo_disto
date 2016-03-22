@@ -1,0 +1,21 @@
+desc:Stereo FX - Distortion Simple (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:0.7<0,1>Drive
+slider2:5000<500,10000>Lowpass Cutoff
+
+@init
+disL.disto(slider1, slider2);
+disR.disto(slider1, slider2);
+
+@slider
+disL.disto_set_drive(slider1);
+disR.disto_set_drive(slider1);
+disL.disto_set_cutoff(slider2);
+disR.disto_set_cutoff(slider2);
+
+@sample
+amp = scale(slider1, 0, 1, 0.7, 0.4, 2);
+spl0 = disL.disto_do(spl0) * amp;
+spl1 = disR.disto_do(spl1) * amp;

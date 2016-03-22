@@ -1,0 +1,26 @@
+desc:Stereo Dynamics - Gate - Unlinked Channels (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:-50<-90,-12>Threshold (dB)
+slider2:10<1,150>Attack Time (ms)
+slider3:50<1,250>Release Time (ms)
+slider4:5<0.5,10>Look Ahead (ms)
+
+@init
+gL.gate(slider1, slider2, slider3, slider4);
+gR.gate(slider1, slider2, slider3, slider4);
+
+@slider
+gL.gate_set_thresh(slider1);
+gR.gate_set_thresh(slider1);
+gL.gate_set_attack(slider2);
+gR.gate_set_attack(slider2);
+gL.gate_set_release(slider3);
+gR.gate_set_release(slider3);
+gL.gate_set_lookahead(slider4);
+gR.gate_set_lookahead(slider4);
+
+@sample
+spl0 = gL.gate_do(spl0);
+spl1 = gR.gate_do(spl1);

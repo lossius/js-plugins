@@ -1,0 +1,212 @@
+/*
+This plugin is a modification by Trond Lossius of code from cookdsp.
+*/
+
+/////////////////////////////////////////////////////////////////
+// cookdsp is copyright (c) - 2015 - Olivier Belanger          //
+// Permission to use, copy, modify, and/or distribute this     //
+// software for any purpose with or without fee is hereby      //
+// granted, provided that the above copyright notice and this  //
+// permission notice appear in all copies. CookDSP IS PROVIDED //
+// "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.      //
+/////////////////////////////////////////////////////////////////
+
+@init
+
+/******************************************************* 
+4CHCOMP
+=======
+
+Compress a four channel signal that rises above a given threshold.
+
+Description
+-----------
+
+The quadcomp object reduces the volume of loud sounds or amplifies 
+quiet sounds by narrowing or "compressing" an audio signal's dynamic 
+range. It compresses equally the four channels of a quad signal,
+according to an analysis performed on a mix of the four channels.
+This preserves the weighting level between the four channels. 
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### quadcomp(thresh, ratio, attack, release, lookahead) ####
+
+Initializes a quadcomp object. The `thresh` argument is the 
+threshold, in dB, where the compression begins. The `ratio`
+argument is the amount of compression (with a ratio of 4, if
+there is a rise of 8 dB above the threshold in input, the
+output signal rises by only 2 dB). The `attack` argument, 
+in ms, is the upward slope of the internal envelope follower. 
+The `release` argument, in ms, is the downward slope of the 
+internal envelope follower. The `lookahead` argument is a 
+little delay, specified in ms, applied to the signal to 
+compress in order to synchronize the compressor with the 
+internal envelope follower.
+
+Methods
+-------
+
+#### quadcomp_set_thresh(thresh) ####
+
+Sets a new threshold, in dB, to the compressor.
+
+#### quadcomp_set_ratio(ratio) ####
+
+Sets a new compression ratio to the compressor.
+
+#### quadcomp_set_attack(attack) ####
+
+Sets a new attack time, in ms, to the internal envelope follower.
+
+#### quadcomp_set_release(release) ####
+
+Sets a new release time, in ms, to the internal envelope follower.
+
+#### quadcomp_set_lookahead(lookahead) ####
+
+Sets a new delay time, in ms, applied on the signals to compress.
+
+#### quadcomp_do(sig0, sig1) ####
+
+Compress the signals given as argument with the current compressor 
+state. Compressed signals are saved in `out0` and `out1` attributes.
+
+Attributes
+----------
+
+#### quadcomp.out0 ####
+
+Floating-point value that holds the left part of the compressed 
+stereo signal. 
+
+#### quadcomp.out1 ####
+
+Floating-point value that holds the right part of the compressed 
+stereo signal. 
+
+Example
+-------
+
+    desc:4ch Dynamics - Compression - Linked Channels (cookdsp) (Lossius)
+    
+    import cookdsp.jsfx-inc
+    import 4ch-dynamics.jsfx-inc
+    
+    slider1:-30<-70,0>Threshold (dB)
+    slider2:4<1,20>Ratio
+    slider3:10<1,150>Attack Time (ms)
+    slider4:100<1,250>Release Time (ms)
+    slider5:5<0.5,10>Look Ahead (ms)
+    slider6:0<-6,18>Post Gain
+    
+    in_pin:1
+    in_pin:2
+    in_pin:3
+    in_pin:4
+    
+    out_pin:1
+    out_pin:2
+    out_pin:3
+    out_pin:4
+    
+    @init
+    comp.quadcomp(slider1, slider2, slider3, slider4, slider5);
+    
+    @slider
+    comp.quadcomp_set_thresh(slider1);
+    comp.quadcomp_set_ratio(slider2);
+    comp.quadcomp_set_attack(slider3);
+    comp.quadcomp_set_release(slider4);
+    comp.quadcomp_set_lookahead(slider5);
+    gain = pow(10, slider6 * 0.05);
+    
+    @sample
+    comp.quadcomp_do(spl0, spl1, spl2, spl3);
+    spl0 = comp.out0 * gain;
+    spl1 = comp.out1 * gain;
+    spl2 = comp.out2 * gain;
+    spl3 = comp.out3 * gain;
+
+********************************************************/
+function quadcomp(thresh ratio attack release lookahead)
+(
+    this.thresh = thresh; this.ratio = ratio;
+    this.attack = attack; this.release = release;
+    this.out0 = this.out1 = 0.0;
+    this.lookahead = lookahead;
+    this.look0.delay(srate/8);
+    this.look1.delay(srate/8);
+    this.look2.delay(srate/8);
+    this.look3.delay(srate/8);
+    this.y0 = 0.0;
+    freq_ = 1 / (attack * 0.001);
+    this.acoeff = exp(-2 * $pi * freq_ / srate);
+    freq_ = 1 / (release * 0.001);
+    this.rcoeff = exp(-2 * $pi * freq_ / srate);
+);
+
+function quadcomp_set_thresh(thresh)
+(
+    this.thresh = thresh;
+);
+
+function quadcomp_set_ratio(ratio)
+(
+    this.ratio = ratio;
+);
+
+function quadcomp_set_attack(attack)
+(
+    this.attack = attack;
+    freq_ = 1 / (attack * 0.001);
+    this.acoeff = exp(-2 * $pi * freq_ / srate);
+);
+
+function quadcomp_set_release(release)
+(
+    this.release = release;
+    freq_ = 1 / (release * 0.001);
+    this.rcoeff = exp(-2 * $pi * freq_ / srate);
+);
+
+function quadcomp_set_lookahead(lookahead)
+(
+    this.lookahead = lookahead;
+);
+
+function quadcomp_do(sig0 sig1 sig2 sig3)
+(
+    in_ = (sig0 + sig1 +sig2 + sig3) * 0.5;
+    delInSec_ = this.lookahead * 0.001;
+    tmp0_ = this.look0.delay_fsread2(delInSec_);
+    tmp1_ = this.look1.delay_fsread2(delInSec_);
+    tmp2_ = this.look2.delay_fsread2(delInSec_);
+    tmp3_ = this.look3.delay_fsread2(delInSec_);
+    this.look0.delay_write(sig0);
+    this.look1.delay_write(sig1);
+    this.look2.delay_write(sig2);
+    this.look3.delay_write(sig3);
+    absin_ = abs(in_);
+    absin_ > this.y0 ? (
+        this.y0 = absin_ + (this.y0 - absin_) * this.acoeff;
+    ) : (
+        this.y0 = absin_ + (this.y0 - absin_) * this.rcoeff;
+    );
+    dbin_ = 20 * log10(this.y0 + 0.0000001);
+    dbin_ > this.thresh ? (
+        diff_ = dbin_ - this.thresh;
+        att_ = pow(10, (diff_ - diff_ / this.ratio) * 0.05);
+        tmp0_ /= att_;
+        tmp1_ /= att_;
+        tmp2_ /= att_;
+        tmp3_ /= att_;
+    );
+    this.out0 = tmp0_;
+    this.out1 = tmp1_;
+    this.out2 = tmp2_;
+    this.out3 = tmp3_;
+);

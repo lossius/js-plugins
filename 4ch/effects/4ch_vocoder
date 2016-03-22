@@ -1,0 +1,56 @@
+desc:4ch FX - Vocoder (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:80<40,300>Base Frequency (Hz)
+slider2:1.2<0.5,2>Frequency Spread
+slider3:50<1,200>Filters Q
+slider4:0.5<0,1>Follower Slope
+slider5:24<4,64,1>Number of Bands (init only)
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+voc0.vocoder(slider1, slider2, slider3, slider4, slider5);
+voc1.vocoder(slider1, slider2, slider3, slider4, slider5);
+voc2.vocoder(slider1, slider2, slider3, slider4, slider5);
+voc3.vocoder(slider1, slider2, slider3, slider4, slider5);
+
+@slider
+voc0.vocoder_set_basefreq(slider1);
+voc1.vocoder_set_basefreq(slider1);
+voc2.vocoder_set_basefreq(slider1);
+voc3.vocoder_set_basefreq(slider1);
+
+voc0.vocoder_set_freqspread(slider2);
+voc1.vocoder_set_freqspread(slider2);
+voc2.vocoder_set_freqspread(slider2);
+voc3.vocoder_set_freqspread(slider2);
+
+voc0.vocoder_set_q(slider3);
+voc1.vocoder_set_q(slider3);
+voc2.vocoder_set_q(slider3);
+voc3.vocoder_set_q(slider3);
+
+voc0.vocoder_set_slope(slider4);
+voc1.vocoder_set_slope(slider4);
+voc2.vocoder_set_slope(slider4);
+voc3.vocoder_set_slope(slider4);
+
+
+@sample
+// Use white noise as exciter
+noise = rand(2) - 1;
+spl0 = voc0.vocoder_do(spl0, noise);
+spl1 = voc1.vocoder_do(spl1, noise);
+spl2 = voc2.vocoder_do(spl2, noise);
+spl3 = voc3.vocoder_do(spl3, noise);

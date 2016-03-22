@@ -1,0 +1,63 @@
+desc: 4ch Dynamics - Compression - Unlinked Channels (cookdsp)
+
+import cookdsp.jsfx-inc
+
+slider1:-30<-70,0>Threshold (dB)
+slider2:4<1,20>Ratio
+slider3:10<1,150>Attack Time (ms)
+slider4:100<1,250>Release Time (ms)
+slider5:5<0.5,10>Look Ahead (ms)
+slider6:0<-6,18>Post Gain
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+c0.compress(slider1, slider2, slider3, slider4, slider5);
+c1.compress(slider1, slider2, slider3, slider4, slider5);
+c2.compress(slider1, slider2, slider3, slider4, slider5);
+c3.compress(slider1, slider2, slider3, slider4, slider5);
+
+
+@slider
+c0.compress_set_thresh(slider1);
+c1.compress_set_thresh(slider1);
+c2.compress_set_thresh(slider1);
+c3.compress_set_thresh(slider1);
+
+c0.compress_set_ratio(slider2);
+c1.compress_set_ratio(slider2);
+c2.compress_set_ratio(slider2);
+c3.compress_set_ratio(slider2);
+
+c0.compress_set_attack(slider3);
+c1.compress_set_attack(slider3);
+c2.compress_set_attack(slider3);
+c3.compress_set_attack(slider3);
+
+c0.compress_set_release(slider4);
+c1.compress_set_release(slider4);
+c2.compress_set_release(slider4);
+c3.compress_set_release(slider4);
+
+c0.compress_set_lookahead(slider5);
+c1.compress_set_lookahead(slider5);
+c2.compress_set_lookahead(slider5);
+c3.compress_set_lookahead(slider5);
+
+gain = pow(10, slider6 * 0.05);
+
+
+@sample
+spl0 = c0.compress_do(spl0) * gain;
+spl1 = c1.compress_do(spl1) * gain;
+spl2 = c2.compress_do(spl2) * gain;
+spl3 = c3.compress_do(spl3) * gain;

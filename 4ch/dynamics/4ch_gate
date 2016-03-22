@@ -1,0 +1,54 @@
+desc:4ch Dynamics - Gate - Unlinked Channels (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:-50<-90,-12>Threshold (dB)
+slider2:10<1,150>Attack Time (ms)
+slider3:50<1,250>Release Time (ms)
+slider4:5<0.5,10>Look Ahead (ms)
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+g0.gate(slider1, slider2, slider3, slider4);
+g1.gate(slider1, slider2, slider3, slider4);
+g2.gate(slider1, slider2, slider3, slider4);
+g3.gate(slider1, slider2, slider3, slider4);
+
+
+@slider
+g0.gate_set_thresh(slider1);
+g1.gate_set_thresh(slider1);
+g2.gate_set_thresh(slider1);
+g3.gate_set_thresh(slider1);
+
+g0.gate_set_attack(slider2);
+g1.gate_set_attack(slider2);
+g2.gate_set_attack(slider2);
+g3.gate_set_attack(slider2);
+
+g0.gate_set_release(slider3);
+g1.gate_set_release(slider3);
+g2.gate_set_release(slider3);
+g3.gate_set_release(slider3);
+
+g0.gate_set_lookahead(slider4);
+g1.gate_set_lookahead(slider4);
+g2.gate_set_lookahead(slider4);
+g3.gate_set_lookahead(slider4);
+
+
+@sample
+spl0 = g0.gate_do(spl0);
+spl1 = g1.gate_do(spl1);
+spl2 = g2.gate_do(spl2);
+spl3 = g3.gate_do(spl3);

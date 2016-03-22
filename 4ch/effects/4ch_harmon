@@ -1,0 +1,51 @@
+// JSFX-CookDSP - Pobjects example
+// (c) Olivier Belanger - 2015 - belangeo@gmail.com
+
+desc:4ch FX - Harmonizer (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:-9<-12,12,0.01>Transpo Ch1 In Semitones
+slider2:-5<-12,12,0.01>Transpo Ch2 In Semitones
+slider3:3<-12,12,0.01>Transpo Ch3 In Semitones
+slider4:7<-12,12,0.01>Transpo Ch4 In Semitones
+slider5:0<0,1>Feedback
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+tran = list(slider1, slider2, slider3, slider4);
+feed = set(4, slider5);
+hrms.Pharmon(tran, feed, set(4, 0.1));
+
+
+@slider
+tran[1] = slider1;
+tran[2] = slider2;
+tran[3] = slider3;
+tran[4] = slider4;
+hrms.Pharmon_set_transpo(tran);
+
+feed[1] = slider3;
+feed[2] = slider3;
+feed[3] = slider3;
+feed[4] = slider3;
+hrms.Pharmon_set_feedback(feed);
+
+
+@sample
+out = hrms.Pharmon_do(tmp(spl0, spl1, spl2, spl3));
+spl0 = (spl0 + out[1]) * 0.4;
+spl1 = (spl1 + out[2]) * 0.4;
+spl2 = (spl2 + out[3]) * 0.4;
+spl3 = (spl3 + out[4]) * 0.4;
+

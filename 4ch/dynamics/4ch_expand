@@ -1,0 +1,63 @@
+desc:4ch Dynamics - Expansion - Unlinked Channels (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:-20<-70,0>Upper Threshold (dB)
+slider2:-40<-70,0>Lower Threshold (dB)
+slider3:2<1,8>Ratio
+slider4:25<1,150>Attack Time (ms)
+slider5:50<1,250>Release Time (ms)
+slider6:-6<-18,6>Post Gain
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+cL.expand(slider1, slider2, slider3, slider4, slider5, 5);
+cR.expand(slider1, slider2, slider3, slider4, slider5, 5);
+cL.expand(slider1, slider2, slider3, slider4, slider5, 5);
+cR.expand(slider1, slider2, slider3, slider4, slider5, 5);
+
+
+@slider
+c0.expand_set_upthresh(slider1);
+c1.expand_set_upthresh(slider1);
+c2.expand_set_upthresh(slider1);
+c3.expand_set_upthresh(slider1);
+
+c0.expand_set_downthresh(slider2);
+c1.expand_set_downthresh(slider2);
+c2.expand_set_downthresh(slider2);
+c3.expand_set_downthresh(slider2);
+
+c0.expand_set_ratio(slider3);
+c1.expand_set_ratio(slider3);
+c2.expand_set_ratio(slider3);
+c3.expand_set_ratio(slider3);
+
+c0.expand_set_attack(slider4);
+c1.expand_set_attack(slider4);
+c2.expand_set_attack(slider4);
+c3.expand_set_attack(slider4);
+
+c0.expand_set_release(slider5);
+c1.expand_set_release(slider5);
+c2.expand_set_release(slider5);
+c3.expand_set_release(slider5);
+
+gain = pow(10, slider6 * 0.05);
+
+
+@sample
+spl0 = c0.expand_do(spl0) * gain;
+spl1 = c1.expand_do(spl1) * gain;
+spl2 = c2.expand_do(spl2) * gain;
+spl3 = c3.expand_do(spl3) * gain;

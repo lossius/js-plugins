@@ -1,0 +1,49 @@
+desc:4ch FX - Reverberation Simple (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:0.75<0,1>Feedback
+slider2:5000<200,10000>Cutoff
+slider3:0.25<0,1>Balance
+slider4:0.3<0,1>Post-Gain
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+rev0.wgverb(slider1, slider2, slider3);
+rev1.wgverb(slider1, slider2, slider3);
+rev2.wgverb(slider1, slider2, slider3);
+rev3.wgverb(slider1, slider2, slider3);
+
+
+@slider
+rev0.wgverb_set_feed(slider1);
+rev1.wgverb_set_feed(slider1);
+rev2.wgverb_set_feed(slider1);
+rev3.wgverb_set_feed(slider1);
+
+rev0.wgverb_set_cutoff(slider2);
+rev1.wgverb_set_cutoff(slider2);
+rev2.wgverb_set_cutoff(slider2);
+rev3.wgverb_set_cutoff(slider2);
+
+rev0.wgverb_set_bal(slider3);
+rev1.wgverb_set_bal(slider3);
+rev2.wgverb_set_bal(slider3);
+rev3.wgverb_set_bal(slider3);
+
+
+@sample
+spl0 = rev0.wgverb_do(spl0) * slider4; 
+spl1 = rev1.wgverb_do(spl1) * slider4;
+spl2 = rev2.wgverb_do(spl2) * slider4; 
+spl3 = rev3.wgverb_do(spl3) * slider4;

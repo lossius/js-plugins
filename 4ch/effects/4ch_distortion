@@ -5,13 +5,6 @@ import cookdsp.jsfx-inc
 slider1:0.7<0,1>Drive
 slider2:5000<500,10000>Lowpass Cutoff
 
-
-@init
-dis1.disto(slider1, slider2);
-dis2.disto(slider1, slider2);
-dis3.disto(slider1, slider2);
-dis4.disto(slider1, slider2);
-
 in_pin:1
 in_pin:2
 in_pin:3
@@ -23,21 +16,28 @@ out_pin:3
 out_pin:4
 
 
+@init
+dis0.disto(slider1, slider2);
+dis1.disto(slider1, slider2);
+dis2.disto(slider1, slider2);
+dis3.disto(slider1, slider2);
+
+
 @slider
+dis0.disto_set_drive(slider1);
 dis1.disto_set_drive(slider1);
 dis2.disto_set_drive(slider1);
 dis3.disto_set_drive(slider1);
-dis4.disto_set_drive(slider1);
 
+dis0.disto_set_cutoff(slider2);
 dis1.disto_set_cutoff(slider2);
 dis2.disto_set_cutoff(slider2);
 dis3.disto_set_cutoff(slider2);
-dis4.disto_set_cutoff(slider2);
 
 
 @sample
 amp = scale(slider1, 0, 1, 0.7, 0.4, 2);
-spl0 = dis1.disto_do(spl0) * amp;
-spl1 = dis2.disto_do(spl1) * amp;
-spl2 = dis3.disto_do(spl2) * amp;
-spl3 = dis4.disto_do(spl3) * amp;
+spl0 = dis0.disto_do(spl0) * amp;
+spl1 = dis1.disto_do(spl1) * amp;
+spl2 = dis2.disto_do(spl2) * amp;
+spl3 = dis3.disto_do(spl3) * amp;

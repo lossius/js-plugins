@@ -21,10 +21,10 @@ out_pin:4
 
 
 @init
-cL.expand(slider1, slider2, slider3, slider4, slider5, 5);
-cR.expand(slider1, slider2, slider3, slider4, slider5, 5);
-cL.expand(slider1, slider2, slider3, slider4, slider5, 5);
-cR.expand(slider1, slider2, slider3, slider4, slider5, 5);
+c0.expand(slider1, slider2, slider3, slider4, slider5, 5);
+c1.expand(slider1, slider2, slider3, slider4, slider5, 5);
+c2.expand(slider1, slider2, slider3, slider4, slider5, 5);
+c3.expand(slider1, slider2, slider3, slider4, slider5, 5);
 
 
 @slider

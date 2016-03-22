@@ -1,4 +1,4 @@
-desc:Granulator - Simple (cookdsp)
+desc:Stereo Granulator - Simple (cookdsp)
 
 slider1:24<1,64,1>Number Of Grains
 slider2:1<0.125,4>Transposition

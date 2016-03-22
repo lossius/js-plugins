@@ -35,10 +35,10 @@ tran[3] = slider3;
 tran[4] = slider4;
 hrms.Pharmon_set_transpo(tran);
 
-feed[1] = slider3;
-feed[2] = slider3;
-feed[3] = slider3;
-feed[4] = slider3;
+feed[1] = slider5;
+feed[2] = slider5;
+feed[3] = slider5;
+feed[4] = slider5;
 hrms.Pharmon_set_feedback(feed);
 
 

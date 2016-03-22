@@ -12,7 +12,7 @@
 /************************************************************************
  Setup
 ************************************************************************/
-desc:4ch Long Delay and Feedback (Trond)
+desc: 4ch Delay - Long + Feedback (cookdsp) (Lossius)
 
 slider1:2500<1,30000>Delay Time (ms)
 slider2:0<-1,1>Feedback

@@ -9,7 +9,7 @@
  "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
 */
 
-desc:4ch RealTime Granulator - Linked (Trond)
+desc:4ch Granulator - RealTime - Linked Chanels (cookdsp) (Lossius)
 
 slider1:0<-24.,24.,0.01>Transposition (MIDI)
 slider2:24<1,64,1>Number Of Grains

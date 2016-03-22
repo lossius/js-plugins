@@ -9,7 +9,7 @@
  "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
 */
 
-desc:4ch Simple Granulator - Linked (Trond)
+desc:4ch Granulator - Simple - Linked Channels (cookdsp) (Lossius)
 
 slider1:10<0,20,0.001>Reading Position (s)
 slider2:0<-24.,24.,0.01>Transposition (MIDI)

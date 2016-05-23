@@ -1,0 +1,135 @@
+/*
+ Copyright - Trond Lossius, 2016
+ License: New BSD license
+ 
+ This plug use the cookdsp library.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+desc:8ch Delay - Distance Delay Adjustment (cookdsp) (Lossius)
+
+slider1:1<-0,50,0.001>Channel 1 speaker distance (m.)
+slider2:1<-0,50,0.001>Channel 2 speaker distance (m.)
+slider3:1<-0,50,0.001>Channel 3 speaker distance (m.)
+slider4:1<-0,50,0.001>Channel 4 speaker distance (m.)
+slider5:1<-0,50,0.001>Channel 5 speaker distance (m.)
+slider6:1<-0,50,0.001>Channel 6 speaker distance (m.)
+slider7:1<-0,50,0.001>Channel 7 speaker distance (m.)
+slider8:1<-0,50,0.001>Channel 8 speaker distance (m.)
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+in_pin:5
+in_pin:6
+in_pin:7
+in_pin:8
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+out_pin:5
+out_pin:6
+out_pin:7
+out_pin:8
+
+
+import cookdsp.jsfx-inc
+
+@init
+
+kNumChannels = 8;
+kSpeedOfSound = 340.29;
+
+// Memory assignments - using cookdsp
+distance  = memalloc(kNumChannels);
+delaytime = memalloc(kNumChannels);
+
+// Delay lines
+d0.delay(srate);
+d1.delay(srate);
+d2.delay(srate);
+d3.delay(srate);
+d4.delay(srate);
+d5.delay(srate);
+d6.delay(srate);
+d7.delay(srate);
+
+@slider
+distance[0] = slider1;
+distance[1] = slider2;
+distance[2] = slider3;
+distance[3] = slider4;
+distance[4] = slider5;
+distance[5] = slider6;
+distance[6] = slider7;
+distance[7] = slider8;
+
+@block
+
+maxdist = 0;
+
+iblock = 0;
+// Find longest distance
+loop(kNumChannels,
+  maxdist = max(distance[iblock], maxdist);
+  iblock += 1;
+);
+
+// Set delays
+iblock = 0;
+loop(kNumChannels,
+  // Calculate delay time in samples, round of to avoid interpolations
+  delaytime[iblock] = floor((srate * (maxdist - distance[iblock]) / kSpeedOfSound) + 0.5);
+  iblock += 1;
+);
+
+DEL_T_0 = delaytime[0];
+DEL_T_1 = delaytime[1];
+DEL_T_2 = delaytime[2];
+DEL_T_3 = delaytime[3];
+DEL_T_4 = delaytime[4];
+DEL_T_5 = delaytime[5];
+DEL_T_6 = delaytime[6];
+DEL_T_7 = delaytime[7];
+
+
+@sample
+
+// read with no interpolation
+val0 = d0.delay_read(delaytime[0]);
+val1 = d1.delay_read(delaytime[1]);
+val2 = d2.delay_read(delaytime[2]);
+val3 = d3.delay_read(delaytime[3]);
+val4 = d4.delay_read(delaytime[4]);
+val5 = d5.delay_read(delaytime[5]);
+val6 = d6.delay_read(delaytime[6]);
+val7 = d7.delay_read(delaytime[7]);
+
+// write values in delay lines 
+d0.delay_write(spl0);
+d1.delay_write(spl1);
+d2.delay_write(spl2);
+d3.delay_write(spl3);
+d4.delay_write(spl4);
+d5.delay_write(spl5);
+d6.delay_write(spl6);
+d7.delay_write(spl7);
+
+// output
+spl0 = val0;
+spl1 = val1;
+spl2 = val2;
+spl3 = val3;
+spl4 = val4;
+spl5 = val5;
+spl6 = val6;
+spl7 = val7;

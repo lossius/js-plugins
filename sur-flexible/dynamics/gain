@@ -12,7 +12,7 @@ Redistribution and use in source and binary forms, with or without modification,
 */
 
 
-desc: Sur Gain Adjust (flexible channels)
+desc: Sur Gain Adjust (Lossius)
 
 slider1:0<-24,24,0.1>Gain adjustment (dB)
 

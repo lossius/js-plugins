@@ -15,7 +15,7 @@ Redistribution and use in source and binary forms, with or without modification,
 /************************************************************************
  Setup
 ************************************************************************/
-desc: Sur Tremolo (Flexible Channels)
+desc: Sur Tremolo (Lossius)
 
 
 slider1:4<0,100,0.1>Frequency (Hz)

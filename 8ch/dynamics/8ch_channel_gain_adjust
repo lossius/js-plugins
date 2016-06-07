@@ -61,7 +61,7 @@ nextGain[3] = dbtoa(slider4);
 nextGain[4] = dbtoa(slider5);
 nextGain[5] = dbtoa(slider6);
 nextGain[6] = dbtoa(slider7);
-nextGain[8] = dbtoa(slider8);
+nextGain[7] = dbtoa(slider8);
 
 @block
 iblock = 0;

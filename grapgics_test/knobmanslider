@@ -1,6 +1,5 @@
 /*
 TODO:
-- log mapping for freq
 */
 
 desc:knobman_test
@@ -49,6 +48,12 @@ out_pin:2
 out_pin:3
 out_pin:4
 
+
+/********************************************************
+*
+* Init
+*
+********************************************************/
 
 @init
 
@@ -99,6 +104,11 @@ Sets normalised slider value, between 0 and 1.
 #### knobSetDisplayedValue(val) ####
 
 Sets the displayed numerical value.
+
+#### knobMouseOverWidget() ####
+
+Returns 1 if mouse is positioned over this knob widget, including area of
+label and  displayed value. Else it returns 0.
 
 #### knobDraw() ####
 
@@ -154,6 +164,9 @@ function knob(xPos yPos imagefile numFrames imageWidth imageHeight label unit)
   // Label
   this.label = label;
   this.unit = unit;
+  
+  // Mouse state parameter
+  this.hover = 0;
       
   // Memory assignment, used when drawing images
   this.coordinatelist = memalloc(10);
@@ -182,14 +195,29 @@ function knobSetDisplayedValue(val)
   this.valDisplay = val;
 );
 
+function knobMouseOverWidget()
+(
+  (mouse_x>=this.x) && (mouse_x<=(this.x+this.width)) && (mouse_y>=this.y) && (mouse_y<=(this.y+this.width));
+);
+
 function knobDraw()
 (
-  // Background
+  // Background colour
   gfx_r = 0.7;
   gfx_g = 0.7;
   gfx_b = 0.7;
-
   gfx_rect(this.x, this.y, this.width, this.height);
+  
+  // hover status
+  (this.hover) ? (
+    gfx_r = 0.1;
+    gfx_g = 0.1;
+    gfx_b = 0.1;
+    gfx_roundrect(this.x+1, this.y+1, this.width-3, this.height-3, 8, 1);
+  );
+
+  
+
   
   // Source y position depends on slider value
   coordinatelist = this.coordinatelist;
@@ -217,26 +245,26 @@ function knobDraw()
 );
 
 gfx_clear=-1;
-filter1Freq.knob(50, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter1Freq.knob( 50, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter2Freq.knob(130, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter3Freq.knob(210, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter4Freq.knob(290, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter5Freq.knob(370, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter6Freq.knob(450, 100, 0, 101, 50, 50, "Freq", "Hz");
 
-filter1Gain.knob(50, 190, 0, 101, 50, 50, "Gain", "dB");
-filter2Gain.knob(130, 190, 0, 101, 50, 50, "Gain", "dB");
-filter3Gain.knob(210, 190, 0, 101, 50, 50, "Gain", "dB");
-filter4Gain.knob(290, 190, 0, 101, 50, 50, "Gain", "dB");
-filter5Gain.knob(370, 190, 0, 101, 50, 50, "Gain", "dB");
-filter6Gain.knob(450, 190, 0, 101, 50, 50, "Gain", "dB");
+filter1Gain.knob(50,  195, 0, 101, 50, 50, "Gain", "dB");
+filter2Gain.knob(130, 195, 0, 101, 50, 50, "Gain", "dB");
+filter3Gain.knob(210, 195, 0, 101, 50, 50, "Gain", "dB");
+filter4Gain.knob(290, 195, 0, 101, 50, 50, "Gain", "dB");
+filter5Gain.knob(370, 195, 0, 101, 50, 50, "Gain", "dB");
+filter6Gain.knob(450, 195, 0, 101, 50, 50, "Gain", "dB");
 
-filter1Bandwidth.knob(50, 280, 0, 101, 50, 50, "Bandwidth", "oct");
-filter2Bandwidth.knob(130, 280, 0, 101, 50, 50, "Bandwidth", "oct");
-filter3Bandwidth.knob(210, 280, 0, 101, 50, 50, "Bandwidth", "oct");
-filter4Bandwidth.knob(290, 280, 0, 101, 50, 50, "Bandwidth", "oct");
-filter5Bandwidth.knob(370, 280, 0, 101, 50, 50, "Bandwidth", "oct");
-filter6Bandwidth.knob(450, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter1Bandwidth.knob( 50, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter2Bandwidth.knob(130, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter3Bandwidth.knob(210, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter4Bandwidth.knob(290, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter5Bandwidth.knob(370, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter6Bandwidth.knob(450, 290, 0, 101, 50, 50, "Bandwidth", "oct");
 
 q = bandwidth2q(slider7);
 f1_1.eq(slider1, q, slider13, slider19);
@@ -274,6 +302,12 @@ f6_2.eq(slider6, q, slider18, slider24);
 f6_3.eq(slider6, q, slider18, slider24);
 f6_4.eq(slider6, q, slider18, slider24);
 
+
+/********************************************************
+*
+* Sliders
+*
+********************************************************/
 @slider
 // Center freq
 f1_1.eq_set_freq(slider1); 
@@ -458,14 +492,54 @@ filter4Gain.knobSetDisplayedValue(slider16);
 filter5Gain.knobSetDisplayedValue(slider17);
 filter6Gain.knobSetDisplayedValue(slider18);
 
+
+/********************************************************
+*
+* Graphics
+*
+********************************************************/
 @gfx 520 300
 
-// Background
-gfx_r = 0.6;
-gfx_g = 0.6;
-gfx_b = 0.6;
+// Mouse interaction
+(mouse_cap > 0) ? (
+  (mouseOnWidget == 0) ? (
+    // TODO: Test if mouse is over any of the widgets
+    mouseOnWidget = 1;
+  ); 
+) : (
+  mouseOnWidget = 0;
+  
+  // Set hover attribute
+  filter1Freq.hover = filter1Freq.knobMouseOverWidget();
+  filter2Freq.hover = filter2Freq.knobMouseOverWidget();
+  filter3Freq.hover = filter3Freq.knobMouseOverWidget();
+  filter4Freq.hover = filter4Freq.knobMouseOverWidget();
+  filter5Freq.hover = filter5Freq.knobMouseOverWidget();
+  filter6Freq.hover = filter6Freq.knobMouseOverWidget();
 
-//gfx_rect(50, 50, 150, 150);
+  filter1Bandwidth.hover = filter1Bandwidth.knobMouseOverWidget();
+  filter2Bandwidth.hover = filter2Bandwidth.knobMouseOverWidget();
+  filter3Bandwidth.hover = filter3Bandwidth.knobMouseOverWidget();
+  filter4Bandwidth.hover = filter4Bandwidth.knobMouseOverWidget();
+  filter5Bandwidth.hover = filter5Bandwidth.knobMouseOverWidget();
+  filter6Bandwidth.hover = filter6Bandwidth.knobMouseOverWidget();
+    
+  filter1Gain.hover = filter1Gain.knobMouseOverWidget();
+  filter2Gain.hover = filter2Gain.knobMouseOverWidget();
+  filter3Gain.hover = filter3Gain.knobMouseOverWidget();
+  filter4Gain.hover = filter4Gain.knobMouseOverWidget();
+  filter5Gain.hover = filter5Gain.knobMouseOverWidget();
+  filter6Gain.hover = filter6Gain.knobMouseOverWidget();
+);
+
+
+
+// Background
+gfx_r = 0.7;
+gfx_g = 0.7;
+gfx_b = 0.7;
+
+gfx_rect(0, 0, gfx_w, gfx_h);
 
 
 filter1Freq.knobDraw();
@@ -490,7 +564,13 @@ filter5Bandwidth.knobDraw();
 filter6Bandwidth.knobDraw();
 
 
+/********************************************************
+*
+* Sample processing
+*
+********************************************************/
 @sample
+
 // Cascading filterbank
 spl0 = f1_1.eq_do(spl0);
 spl1 = f1_2.eq_do(spl1);

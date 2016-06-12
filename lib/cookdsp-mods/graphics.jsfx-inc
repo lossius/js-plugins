@@ -37,13 +37,29 @@ unit       - Parameter unit
 Methods
 -------
 
-#### knobSetSlider ####
+#### knobGetSlider() ####
+
+Get current normalised slider value.
+
+#### knobSetSlider(cal) ####
 
 Sets normalised slider value, between 0 and 1.
+
+#### knobGetDisplayedValue() ####
+
+Returnes currently displayed value.
 
 #### knobSetDisplayedValue(val) ####
 
 Sets the displayed numerical value.
+
+#### knobInc(val) ####
+
+Increase current normalised slider value by 'val'.
+
+#### knobDec(val) ####
+
+Decrease current normalised slider value by 'val'.
 
 #### knobMouseOverWidget() ####
 
@@ -53,6 +69,8 @@ label and  displayed value. Else it returns 0.
 #### knobDraw() ####
 
 Draw knob GUI.
+
+TODO: Update example
 
 Example
 -------
@@ -135,7 +153,7 @@ function knobSetSlider(val)
   this.valSlider = clip(val, 0, 1);
 );
 
-function knobSGtDisplayedValue()
+function knobGetDisplayedValue()
 (
   this.valDisplay;
 );

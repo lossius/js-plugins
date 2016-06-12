@@ -1,0 +1,204 @@
+@init
+
+/******************************************************* 
+KNOB
+====
+
+Draw knob slider with label and numerical value
+
+
+Description
+-----------
+
+The knob object draws a GUI knob with label positioned above, and 
+slider value and unit below. The knob itself makes use of a pict file
+generated using KnobMan or jKnobMan:
+
+http://www.g200kg.com/en/software/knobman.html
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### knob(xPos yPos imagefile numFrames imageWidth imageHeigh label unit) ####
+
+Initialises a knob object with the following initial arguments:
+
+xPos       - Left edge of knob gui including padding and labels
+yPos       - Upper edge of knob gui including padding and labels
+imagefile  - ID of image file containing knobman picture
+numFrames  - The number of frames in the knobman image file
+imageWidth - The width of one frame in the knobman image file
+imageHeigh - The height of one frame in the knobman image file
+label      - Label to be displayed
+unit       - Parameter unit
+
+Methods
+-------
+
+#### knobSetSlider ####
+
+Sets normalised slider value, between 0 and 1.
+
+#### knobSetDisplayedValue(val) ####
+
+Sets the displayed numerical value.
+
+#### knobMouseOverWidget() ####
+
+Returns 1 if mouse is positioned over this knob widget, including area of
+label and  displayed value. Else it returns 0.
+
+#### knobDraw() ####
+
+Draw knob GUI.
+
+Example
+-------
+
+    desc:Simple Distortion
+
+    import cookdsp.jsfx-inc
+
+    slider1:0.7<0,1>Drive
+    slider2:5000<500,10000>Lowpass Cutoff
+
+    @init
+    disL.disto(slider1, slider2);
+    disR.disto(slider1, slider2);
+
+    @slider
+    disL.disto_set_drive(slider1);
+    disR.disto_set_drive(slider1);
+    disL.disto_set_cutoff(slider2);
+    disR.disto_set_cutoff(slider2);
+
+    @sample
+    amp = scale(slider1, 0, 1, 0.7, 0.4, 2);
+    spl0 = disL.disto_do(spl0) * amp;
+    spl1 = disR.disto_do(spl1) * amp;
+
+********************************************************/
+function knob(xPos yPos imagefile numFrames imageWidth imageHeight label unit)
+(
+  // Geometry of full GUI including padding, label and value display
+  this.x = xPos;
+  this.y = yPos;
+  this.xPad = 10;   // Horisontal padding
+  this.yPad = 20;   // Vertical padding
+  this.width  = imageWidth  + 2*this.xPad;
+  this.height = imageHeight + 2*this.yPad;
+  this.horCenter = this.x + this.xPad + 0.5*imageWidth;
+  
+  // Geometry of knobamn image
+  this.knobX = this.x + this.xPad;
+  this.knobY = this.y + this.yPad;
+  this.knobWidth  = imageWidth;
+  this.knobHeight = imageHeight;
+  
+  // Properties of knobman image file
+  this.knobImageFile = imagefile;
+  this.knobNumFrames = numFrames;
+  
+  // Label
+  this.label = label;
+  this.unit = unit;
+  
+  // Mouse state parameter
+  this.hover = 0;
+      
+  // Memory assignment, used when drawing images
+  this.coordinatelist = memalloc(10);
+  
+  coordinatelist = this.coordinatelist;
+  
+  coordinatelist[0] = 0.;                     // source_x
+  // coordinatelist[1]                        // source_y depens on slider value
+  coordinatelist[2] = this.knobWidth;         // source_w
+  coordinatelist[3] = this.knobHeight;        // source_h
+  coordinatelist[4] = this.knobX;             // dest_x
+  coordinatelist[5] = this.knobY;             // dest_y
+  coordinatelist[6] = this.knobWidth;         // dest_w
+  coordinatelist[7] = this.knobHeight;        // dest_h
+  coordinatelist[8] = 0; // rotation_x_offset - only used if rotation is set, represents offset from center of image
+  coordinatelist[9] = 0; // rotation_y_offset - only used if rotation is set, represents offset from center of image
+);
+
+function knobGetSlider()
+(
+  this.valSlider;
+);
+
+function knobSetSlider(val)
+(
+  this.valSlider = clip(val, 0, 1);
+);
+
+function knobSGtDisplayedValue()
+(
+  this.valDisplay;
+);
+
+function knobSetDisplayedValue(val)
+(
+  this.valDisplay = val;
+);
+
+function knobInc(val)
+(
+  this.valSlider += val;
+  this.valSlider = clip(this.valSlider, 0, 1);
+);
+
+function knobDec(val)
+(
+  this.valSlider -= val;
+  this.valSlider = clip(this.valSlider, 0, 1);
+);
+
+function knobMouseOverWidget()
+(
+  (mouse_x>=this.x) && (mouse_x<=(this.x+this.width)) && (mouse_y>=this.y) && (mouse_y<=(this.y+this.width));
+);
+
+function knobDraw()
+(
+  // Background colour
+  gfx_r = 0.7;
+  gfx_g = 0.7;
+  gfx_b = 0.7;
+  gfx_rect(this.x, this.y, this.width, this.height);
+  
+  // hover status
+  (this.hover) ? (
+    gfx_r = 0.6;
+    gfx_g = 0.6;
+    gfx_b = 0.6;
+    gfx_roundrect(this.x+1, this.y+1, this.width-3, this.height-3, 8, 1);
+  );
+
+  // Source y position depends on slider value
+  coordinatelist = this.coordinatelist;
+  coordinatelist[1] = floor(this.valSlider*(this.knobNumFrames-1) + 0.5)*this.knobHeight; // source_y
+  gfx_blitext(this.knobImageFile, coordinatelist, 0);
+
+  // Draw label
+  gfx_setfont(1,"Helvetica", 12);
+  gfx_r = 0.1;
+  gfx_g = 0.1;
+  gfx_b = 0.1;
+
+  gfx_measurestr(this.label,w,h);
+  gfx_x = this.horCenter-0.5*w;
+  gfx_y = this.y+6;
+  gfx_drawstr(this.label);
+
+  // Draw value and unit
+  gfx_setfont(1,"Helvetica", 11);
+  sprintf(mystring, "%.5g %s", this.valDisplay, this.unit);
+  gfx_measurestr(mystring,w,h);
+  gfx_x = this.horCenter-0.5*w;
+  gfx_y = this.y+this.height-this.yPad+0;
+  gfx_drawstr(mystring);
+);

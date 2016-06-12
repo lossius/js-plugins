@@ -9,7 +9,7 @@ import lossius-cookdsp-mods.jsfx-inc
 
 filename:0,orange_dial.png
 
-slider1:75<20,20000>-Center Frequency - Filter 1
+slider1:75<20,20000>Center Frequency - Filter 1
 slider2:100<20,20000>-Center Frequency - Filter 2
 slider3:250<20,20000>-Center Frequency - Filter 3
 slider4:750<20,20000>-Center Frequency - Filter 4
@@ -187,14 +187,36 @@ function knob(xPos yPos imagefile numFrames imageWidth imageHeight label unit)
   coordinatelist[9] = 0; // rotation_y_offset - only used if rotation is set, represents offset from center of image
 );
 
+function knobGetSlider()
+(
+  this.valSlider;
+);
+
 function knobSetSlider(val)
 (
   this.valSlider = clip(val, 0, 1);
 );
 
+function knobSGtDisplayedValue()
+(
+  this.valDisplay;
+);
+
 function knobSetDisplayedValue(val)
 (
   this.valDisplay = val;
+);
+
+function knobInc(val)
+(
+  this.valSlider += val;
+  this.valSlider = clip(this.valSlider, 0, 1);
+);
+
+function knobDec(val)
+(
+  this.valSlider -= val;
+  this.valSlider = clip(this.valSlider, 0, 1);
 );
 
 function knobMouseOverWidget()
@@ -212,15 +234,12 @@ function knobDraw()
   
   // hover status
   (this.hover) ? (
-    gfx_r = 0.1;
-    gfx_g = 0.1;
-    gfx_b = 0.1;
+    gfx_r = 0.6;
+    gfx_g = 0.6;
+    gfx_b = 0.6;
     gfx_roundrect(this.x+1, this.y+1, this.width-3, this.height-3, 8, 1);
   );
 
-  
-
-  
   // Source y position depends on slider value
   coordinatelist = this.coordinatelist;
   coordinatelist[1] = floor(this.valSlider*(this.knobNumFrames-1) + 0.5)*this.knobHeight; // source_y
@@ -246,6 +265,187 @@ function knobDraw()
   gfx_drawstr(mystring);
 );
 
+function updateFiltersAndSliders()
+(
+  // Center freq
+  f1_1.eq_set_freq(slider1); 
+  f1_2.eq_set_freq(slider1);
+  f1_3.eq_set_freq(slider1);
+  f1_4.eq_set_freq(slider1);
+
+  f2_1.eq_set_freq(slider2); 
+  f2_2.eq_set_freq(slider2);
+  f2_3.eq_set_freq(slider2);
+  f2_4.eq_set_freq(slider2);
+
+  f3_1.eq_set_freq(slider3); 
+  f3_2.eq_set_freq(slider3);
+  f3_3.eq_set_freq(slider3);
+  f3_4.eq_set_freq(slider3);
+
+  f4_1.eq_set_freq(slider4); 
+  f4_2.eq_set_freq(slider4);
+  f4_3.eq_set_freq(slider4);
+  f4_4.eq_set_freq(slider4);
+
+  f5_1.eq_set_freq(slider5); 
+  f5_2.eq_set_freq(slider5);
+  f5_3.eq_set_freq(slider5);
+  f5_4.eq_set_freq(slider5);
+
+  f6_1.eq_set_freq(slider6); 
+  f6_2.eq_set_freq(slider6);
+  f6_3.eq_set_freq(slider6);
+  f6_4.eq_set_freq(slider6);
+
+  // Bandwidth (oct)
+
+  q = bandwidth2q(slider7);
+  f1_1.eq_set_q(q); 
+  f1_2.eq_set_q(q);
+  f1_3.eq_set_q(q);
+  f1_4.eq_set_q(q);
+
+  q = bandwidth2q(slider8);
+  f2_1.eq_set_q(q); 
+  f2_2.eq_set_q(q);
+  f2_3.eq_set_q(q);
+  f2_4.eq_set_q(q);
+
+  q = bandwidth2q(slider8);
+  f3_1.eq_set_q(q); 
+  f3_2.eq_set_q(q);
+  f3_3.eq_set_q(q);
+  f3_4.eq_set_q(q);
+
+  q = bandwidth2q(slider9);
+  f4_1.eq_set_q(q); 
+  f4_2.eq_set_q(q);
+  f4_3.eq_set_q(q);
+  f4_4.eq_set_q(q);
+
+  q = bandwidth2q(slider11);
+  f5_1.eq_set_q(q); 
+  f5_2.eq_set_q(q);
+  f5_3.eq_set_q(q);
+  f5_4.eq_set_q(q);
+
+  q = bandwidth2q(slider12);
+  f6_1.eq_set_q(q); 
+  f6_2.eq_set_q(q);
+  f6_3.eq_set_q(q);
+  f6_4.eq_set_q(q);
+
+  // Gain
+
+  f1_1.eq_set_boost(slider13);
+  f1_2.eq_set_boost(slider13);
+  f1_3.eq_set_boost(slider13);
+  f1_4.eq_set_boost(slider13);
+
+  f2_1.eq_set_boost(slider14);
+  f2_2.eq_set_boost(slider14);
+  f2_3.eq_set_boost(slider14);
+  f2_4.eq_set_boost(slider14);
+
+  f3_1.eq_set_boost(slider15);
+  f3_2.eq_set_boost(slider15);
+  f3_3.eq_set_boost(slider15);
+  f3_4.eq_set_boost(slider15);
+
+  f4_1.eq_set_boost(slider16);
+  f4_2.eq_set_boost(slider16);
+  f4_3.eq_set_boost(slider16);
+  f4_4.eq_set_boost(slider16);
+
+  f5_1.eq_set_boost(slider17);
+  f5_2.eq_set_boost(slider17);
+  f5_3.eq_set_boost(slider17);
+  f5_4.eq_set_boost(slider17);
+
+  f6_1.eq_set_boost(slider18);
+  f6_2.eq_set_boost(slider18);
+  f6_3.eq_set_boost(slider18);
+  f6_4.eq_set_boost(slider18);
+
+  // Filter type
+
+  f1_1.eq_set_type(slider19);
+  f1_2.eq_set_type(slider19);
+  f1_3.eq_set_type(slider19);
+  f1_4.eq_set_type(slider19);
+
+  f2_1.eq_set_type(slider20);
+  f2_2.eq_set_type(slider20);
+  f2_3.eq_set_type(slider20);
+  f2_4.eq_set_type(slider20);
+
+  f3_1.eq_set_type(slider21);
+  f3_2.eq_set_type(slider21);
+  f3_3.eq_set_type(slider21);
+  f3_4.eq_set_type(slider21);
+
+  f4_1.eq_set_type(slider22);
+  f4_2.eq_set_type(slider22);
+  f4_3.eq_set_type(slider22);
+  f4_4.eq_set_type(slider22);
+
+  f5_1.eq_set_type(slider23);
+  f5_2.eq_set_type(slider23);
+  f5_3.eq_set_type(slider23);
+  f5_4.eq_set_type(slider23);
+
+  f6_1.eq_set_type(slider24);
+  f6_2.eq_set_type(slider24);
+  f6_3.eq_set_type(slider24);
+  f6_4.eq_set_type(slider24);
+
+  // Filter Freq knobs
+  filter1Freq.knobSetSlider( scale(log10(slider1), kLog20, kLog20k, 0., 1., 1) );
+  filter2Freq.knobSetSlider( scale(log10(slider2), kLog20, kLog20k, 0., 1., 1) );
+  filter3Freq.knobSetSlider( scale(log10(slider3), kLog20, kLog20k, 0., 1., 1) );
+  filter4Freq.knobSetSlider( scale(log10(slider4), kLog20, kLog20k, 0., 1., 1) );
+  filter5Freq.knobSetSlider( scale(log10(slider5), kLog20, kLog20k, 0., 1., 1) );
+  filter6Freq.knobSetSlider( scale(log10(slider6), kLog20, kLog20k, 0., 1., 1) );
+
+  filter1Freq.knobSetDisplayedValue(slider1);
+  filter2Freq.knobSetDisplayedValue(slider2);
+  filter3Freq.knobSetDisplayedValue(slider3);
+  filter4Freq.knobSetDisplayedValue(slider4);
+  filter5Freq.knobSetDisplayedValue(slider5);
+  filter6Freq.knobSetDisplayedValue(slider6);
+
+  // Filter BW knobs
+  filter1Bandwidth.knobSetSlider(scale(slider7,  0.01, 4, 0., 1., 1));
+  filter2Bandwidth.knobSetSlider(scale(slider8,  0.01, 4, 0., 1., 1));
+  filter3Bandwidth.knobSetSlider(scale(slider9,  0.01, 4, 0., 1., 1));
+  filter4Bandwidth.knobSetSlider(scale(slider10, 0.01, 4, 0., 1., 1));
+  filter5Bandwidth.knobSetSlider(scale(slider11, 0.01, 4, 0., 1., 1));
+  filter6Bandwidth.knobSetSlider(scale(slider12, 0.01, 4, 0., 1., 1));
+
+  filter1Bandwidth.knobSetDisplayedValue(slider7);
+  filter2Bandwidth.knobSetDisplayedValue(slider8);
+  filter3Bandwidth.knobSetDisplayedValue(slider9);
+  filter4Bandwidth.knobSetDisplayedValue(slider10);
+  filter5Bandwidth.knobSetDisplayedValue(slider11);
+  filter6Bandwidth.knobSetDisplayedValue(slider12);
+
+  // Filter gain knobs
+  filter1Gain.knobSetSlider(scale(slider13, -18., 18., 0., 1., 1.));
+  filter2Gain.knobSetSlider(scale(slider14, -18., 18., 0., 1., 1.));
+  filter3Gain.knobSetSlider(scale(slider15, -18., 18., 0., 1., 1.));
+  filter4Gain.knobSetSlider(scale(slider16, -18., 18., 0., 1., 1.));
+  filter5Gain.knobSetSlider(scale(slider17, -18., 18., 0., 1., 1.));
+  filter6Gain.knobSetSlider(scale(slider18, -18., 18., 0., 1., 1.));
+
+  filter1Gain.knobSetDisplayedValue(slider13);
+  filter2Gain.knobSetDisplayedValue(slider14);
+  filter3Gain.knobSetDisplayedValue(slider15);
+  filter4Gain.knobSetDisplayedValue(slider16);
+  filter5Gain.knobSetDisplayedValue(slider17);
+  filter6Gain.knobSetDisplayedValue(slider18);
+);
+
 gfx_clear=-1;
 filter1Freq.knob( 50, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter2Freq.knob(130, 100, 0, 101, 50, 50, "Freq", "Hz");
@@ -254,19 +454,21 @@ filter4Freq.knob(290, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter5Freq.knob(370, 100, 0, 101, 50, 50, "Freq", "Hz");
 filter6Freq.knob(450, 100, 0, 101, 50, 50, "Freq", "Hz");
 
-filter1Gain.knob(50,  195, 0, 101, 50, 50, "Gain", "dB");
-filter2Gain.knob(130, 195, 0, 101, 50, 50, "Gain", "dB");
-filter3Gain.knob(210, 195, 0, 101, 50, 50, "Gain", "dB");
-filter4Gain.knob(290, 195, 0, 101, 50, 50, "Gain", "dB");
-filter5Gain.knob(370, 195, 0, 101, 50, 50, "Gain", "dB");
-filter6Gain.knob(450, 195, 0, 101, 50, 50, "Gain", "dB");
+filter1Bandwidth.knob( 50, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter2Bandwidth.knob(130, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter3Bandwidth.knob(210, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter4Bandwidth.knob(290, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter5Bandwidth.knob(370, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter6Bandwidth.knob(450, 195, 0, 101, 50, 50, "Bandwidth", "oct");
 
-filter1Bandwidth.knob( 50, 290, 0, 101, 50, 50, "Bandwidth", "oct");
-filter2Bandwidth.knob(130, 290, 0, 101, 50, 50, "Bandwidth", "oct");
-filter3Bandwidth.knob(210, 290, 0, 101, 50, 50, "Bandwidth", "oct");
-filter4Bandwidth.knob(290, 290, 0, 101, 50, 50, "Bandwidth", "oct");
-filter5Bandwidth.knob(370, 290, 0, 101, 50, 50, "Bandwidth", "oct");
-filter6Bandwidth.knob(450, 290, 0, 101, 50, 50, "Bandwidth", "oct");
+filter1Gain.knob(50,  290, 0, 101, 50, 50, "Gain", "dB");
+filter2Gain.knob(130, 290, 0, 101, 50, 50, "Gain", "dB");
+filter3Gain.knob(210, 290, 0, 101, 50, 50, "Gain", "dB");
+filter4Gain.knob(290, 290, 0, 101, 50, 50, "Gain", "dB");
+filter5Gain.knob(370, 290, 0, 101, 50, 50, "Gain", "dB");
+filter6Gain.knob(450, 290, 0, 101, 50, 50, "Gain", "dB");
+
+
 
 q = bandwidth2q(slider7);
 f1_1.eq(slider1, q, slider13, slider19);
@@ -312,211 +514,33 @@ f6_4.eq(slider6, q, slider18, slider24);
 ********************************************************/
 @slider
 
-// slider25 sets value of most recently clicked GUI slider
-mouseClick == 1 ? slider1 = clip(slider25, 20, 20000);
-mouseClick == 2 ? slider2 = clip(slider25, 20, 20000);
-mouseClick == 3 ? slider3 = clip(slider25, 20, 20000);
-mouseClick == 4 ? slider4 = clip(slider25, 20, 20000);
-mouseClick == 5 ? slider5 = clip(slider25, 20, 20000);
-mouseClick == 6 ? slider6 = clip(slider25, 20, 20000);
+// slider25 when changed sets value of most recently clicked GUI slider
+(slider25 != prevSlider25) ? (
+  mouseClick == 1 ? slider1 = clip(slider25, 20, 20000);
+  mouseClick == 2 ? slider2 = clip(slider25, 20, 20000);
+  mouseClick == 3 ? slider3 = clip(slider25, 20, 20000);
+  mouseClick == 4 ? slider4 = clip(slider25, 20, 20000);
+  mouseClick == 5 ? slider5 = clip(slider25, 20, 20000);
+  mouseClick == 6 ? slider6 = clip(slider25, 20, 20000);
+  
+  mouseClick ==  7 ? slider7  = clip(slider25, 0.01, 4);
+  mouseClick ==  8 ? slider8  = clip(slider25, 0.01, 4);
+  mouseClick ==  9 ? slider9  = clip(slider25, 0.01, 4);
+  mouseClick == 10 ? slider10 = clip(slider25, 0.01, 4);
+  mouseClick == 11 ? slider11 = clip(slider25, 0.01, 4);
+  mouseClick == 12 ? slider12 = clip(slider25, 0.01, 4);
+  
+  mouseClick == 13 ? slider13 = clip(slider25, -18, 18);
+  mouseClick == 14 ? slider14 = clip(slider25, -18, 18);
+  mouseClick == 15 ? slider15 = clip(slider25, -18, 18);
+  mouseClick == 16 ? slider16 = clip(slider25, -18, 18);
+  mouseClick == 17 ? slider17 = clip(slider25, -18, 18);
+  mouseClick == 18 ? slider18 = clip(slider25, -18, 18);
+  
+  prevSlider25 = slider25;
+);
 
-mouseClick ==  7 ? slider7  = clip(slider25, 0.01, 4);
-mouseClick ==  8 ? slider8  = clip(slider25, 0.01, 4);
-mouseClick ==  9 ? slider9  = clip(slider25, 0.01, 4);
-mouseClick == 10 ? slider10 = clip(slider25, 0.01, 4);
-mouseClick == 11 ? slider11 = clip(slider25, 0.01, 4);
-mouseClick == 12 ? slider12 = clip(slider25, 0.01, 4);
-
-mouseClick == 13 ? slider13 = clip(slider25, -18, 18);
-mouseClick == 14 ? slider14 = clip(slider25, -18, 18);
-mouseClick == 15 ? slider15 = clip(slider25, -18, 18);
-mouseClick == 16 ? slider16 = clip(slider25, -18, 18);
-mouseClick == 17 ? slider17 = clip(slider25, -18, 18);
-mouseClick == 18 ? slider18 = clip(slider25, -18, 18);
-
-// Center freq
-f1_1.eq_set_freq(slider1); 
-f1_2.eq_set_freq(slider1);
-f1_3.eq_set_freq(slider1);
-f1_4.eq_set_freq(slider1);
-
-f2_1.eq_set_freq(slider2); 
-f2_2.eq_set_freq(slider2);
-f2_3.eq_set_freq(slider2);
-f2_4.eq_set_freq(slider2);
-
-f3_1.eq_set_freq(slider3); 
-f3_2.eq_set_freq(slider3);
-f3_3.eq_set_freq(slider3);
-f3_4.eq_set_freq(slider3);
-
-f4_1.eq_set_freq(slider4); 
-f4_2.eq_set_freq(slider4);
-f4_3.eq_set_freq(slider4);
-f4_4.eq_set_freq(slider4);
-
-f5_1.eq_set_freq(slider5); 
-f5_2.eq_set_freq(slider5);
-f5_3.eq_set_freq(slider5);
-f5_4.eq_set_freq(slider5);
-
-f6_1.eq_set_freq(slider6); 
-f6_2.eq_set_freq(slider6);
-f6_3.eq_set_freq(slider6);
-f6_4.eq_set_freq(slider6);
-
-// Bandwidth (oct)
-
-q = bandwidth2q(slider7);
-f1_1.eq_set_q(q); 
-f1_2.eq_set_q(q);
-f1_3.eq_set_q(q);
-f1_4.eq_set_q(q);
-
-q = bandwidth2q(slider8);
-f2_1.eq_set_q(q); 
-f2_2.eq_set_q(q);
-f2_3.eq_set_q(q);
-f2_4.eq_set_q(q);
-
-q = bandwidth2q(slider8);
-f3_1.eq_set_q(q); 
-f3_2.eq_set_q(q);
-f3_3.eq_set_q(q);
-f3_4.eq_set_q(q);
-
-q = bandwidth2q(slider9);
-f4_1.eq_set_q(q); 
-f4_2.eq_set_q(q);
-f4_3.eq_set_q(q);
-f4_4.eq_set_q(q);
-
-q = bandwidth2q(slider11);
-f5_1.eq_set_q(q); 
-f5_2.eq_set_q(q);
-f5_3.eq_set_q(q);
-f5_4.eq_set_q(q);
-
-q = bandwidth2q(slider12);
-f6_1.eq_set_q(q); 
-f6_2.eq_set_q(q);
-f6_3.eq_set_q(q);
-f6_4.eq_set_q(q);
-
-// Gain
-
-f1_1.eq_set_boost(slider13);
-f1_2.eq_set_boost(slider13);
-f1_3.eq_set_boost(slider13);
-f1_4.eq_set_boost(slider13);
-
-f2_1.eq_set_boost(slider14);
-f2_2.eq_set_boost(slider14);
-f2_3.eq_set_boost(slider14);
-f2_4.eq_set_boost(slider14);
-
-f3_1.eq_set_boost(slider15);
-f3_2.eq_set_boost(slider15);
-f3_3.eq_set_boost(slider15);
-f3_4.eq_set_boost(slider15);
-
-f4_1.eq_set_boost(slider16);
-f4_2.eq_set_boost(slider16);
-f4_3.eq_set_boost(slider16);
-f4_4.eq_set_boost(slider16);
-
-f5_1.eq_set_boost(slider17);
-f5_2.eq_set_boost(slider17);
-f5_3.eq_set_boost(slider17);
-f5_4.eq_set_boost(slider17);
-
-f6_1.eq_set_boost(slider18);
-f6_2.eq_set_boost(slider18);
-f6_3.eq_set_boost(slider18);
-f6_4.eq_set_boost(slider18);
-
-// Filter type
-
-f1_1.eq_set_type(slider19);
-f1_2.eq_set_type(slider19);
-f1_3.eq_set_type(slider19);
-f1_4.eq_set_type(slider19);
-
-f2_1.eq_set_type(slider20);
-f2_2.eq_set_type(slider20);
-f2_3.eq_set_type(slider20);
-f2_4.eq_set_type(slider20);
-
-f3_1.eq_set_type(slider21);
-f3_2.eq_set_type(slider21);
-f3_3.eq_set_type(slider21);
-f3_4.eq_set_type(slider21);
-
-f4_1.eq_set_type(slider22);
-f4_2.eq_set_type(slider22);
-f4_3.eq_set_type(slider22);
-f4_4.eq_set_type(slider22);
-
-f5_1.eq_set_type(slider23);
-f5_2.eq_set_type(slider23);
-f5_3.eq_set_type(slider23);
-f5_4.eq_set_type(slider23);
-
-f6_1.eq_set_type(slider24);
-f6_2.eq_set_type(slider24);
-f6_3.eq_set_type(slider24);
-f6_4.eq_set_type(slider24);
-
-// Filter freq knobs
-//temp = log10(slider1);
-aaTest = log10(slider1);
-abTEST = scale(log10(slider1), kLog20, kLog20k, 0., 1., 1);
-
-
-filter1Freq.knobSetSlider( scale(log10(slider1), kLog20, kLog20k, 0., 1., 1) );
-filter2Freq.knobSetSlider( scale(log10(slider2), kLog20, kLog20k, 0., 1., 1) );
-filter3Freq.knobSetSlider( scale(log10(slider3), kLog20, kLog20k, 0., 1., 1) );
-filter4Freq.knobSetSlider( scale(log10(slider4), kLog20, kLog20k, 0., 1., 1) );
-filter5Freq.knobSetSlider( scale(log10(slider5), kLog20, kLog20k, 0., 1., 1) );
-filter6Freq.knobSetSlider( scale(log10(slider6), kLog20, kLog20k, 0., 1., 1) );
-
-filter1Freq.knobSetDisplayedValue(slider1);
-filter2Freq.knobSetDisplayedValue(slider2);
-filter3Freq.knobSetDisplayedValue(slider3);
-filter4Freq.knobSetDisplayedValue(slider4);
-filter5Freq.knobSetDisplayedValue(slider5);
-filter6Freq.knobSetDisplayedValue(slider6);
-
-// Filter BW knobs
-filter1Bandwidth.knobSetSlider(scale(slider7,  0.01, 4, 0., 1., 1));
-filter2Bandwidth.knobSetSlider(scale(slider8,  0.01, 4, 0., 1., 1));
-filter3Bandwidth.knobSetSlider(scale(slider9,  0.01, 4, 0., 1., 1));
-filter4Bandwidth.knobSetSlider(scale(slider10, 0.01, 4, 0., 1., 1));
-filter5Bandwidth.knobSetSlider(scale(slider11, 0.01, 4, 0., 1., 1));
-filter6Bandwidth.knobSetSlider(scale(slider12, 0.01, 4, 0., 1., 1));
-
-filter1Bandwidth.knobSetDisplayedValue(slider7);
-filter2Bandwidth.knobSetDisplayedValue(slider8);
-filter3Bandwidth.knobSetDisplayedValue(slider9);
-filter4Bandwidth.knobSetDisplayedValue(slider10);
-filter5Bandwidth.knobSetDisplayedValue(slider11);
-filter6Bandwidth.knobSetDisplayedValue(slider12);
-
-// Filter gain knobs
-filter1Gain.knobSetSlider(scale(slider13, -18., 18., 0., 1., 1.));
-filter2Gain.knobSetSlider(scale(slider14, -18., 18., 0., 1., 1.));
-filter3Gain.knobSetSlider(scale(slider15, -18., 18., 0., 1., 1.));
-filter4Gain.knobSetSlider(scale(slider16, -18., 18., 0., 1., 1.));
-filter5Gain.knobSetSlider(scale(slider17, -18., 18., 0., 1., 1.));
-filter6Gain.knobSetSlider(scale(slider18, -18., 18., 0., 1., 1.));
-
-filter1Gain.knobSetDisplayedValue(slider13);
-filter2Gain.knobSetDisplayedValue(slider14);
-filter3Gain.knobSetDisplayedValue(slider15);
-filter4Gain.knobSetDisplayedValue(slider16);
-filter5Gain.knobSetDisplayedValue(slider17);
-filter6Gain.knobSetDisplayedValue(slider18);
-
+updateFiltersAndSliders();
 
 /********************************************************
 *
@@ -527,6 +551,8 @@ filter6Gain.knobSetDisplayedValue(slider18);
 
 // Mouse interaction
 (mouse_cap > 0) ? (
+  
+  // Determine what widget has been clicked
   (mouseOnWidget == 0) ? (
     // mouseClick tracks last clicked widget
     filter1Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 1;
@@ -549,8 +575,224 @@ filter6Gain.knobSetDisplayedValue(slider18);
     filter4Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 16;
     filter5Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 17;
     filter6Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 18;
+    
+    // Initial mouse position on click
+    prevMouseX = mouse_x;
+    prevMouseY = mouse_y;
+  );
+  
+  // Processing for clicked widget and update slider value accodingly
+  
+  // Freq widgets
+  mouseOnWidget == 1 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter1Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider1 = pow(10, scale(filter1Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider1 = 75;
+    );
+    slider_automate(slider1);
+  );
+  
+  mouseOnWidget == 2 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter2Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider2 = pow(10, scale(filter2Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider2 = 100;
+    );
+    slider_automate(slider2);
+  );
+  
+  mouseOnWidget == 3 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter3Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider3 = pow(10, scale(filter3Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider3 = 250;
+    );
+    slider_automate(slider3);
+  );
+  
+  mouseOnWidget == 4 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter4Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider4 = pow(10, scale(filter4Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider4 = 750;
+    );
+    slider_automate(slider4);
+  );
+  
+  mouseOnWidget == 5 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter5Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider5 = pow(10, scale(filter5Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider5 = 2500;
+    );
+    slider_automate(slider5);
+  );
+  
+  mouseOnWidget == 6 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter6Freq.knobInc(0.001*(prevMouseY-mouse_y));
+      slider6 = pow(10, scale(filter6Freq.knobGetSlider(), 0., 1., kLog20, kLog20k, 1));
+    ) : (mouse_cap == 2) ? (
+      slider6 = 7500;
+    );
+    slider_automate(slider6);
+  );
+  
+  
+  // Bandwidth widgets
+  mouseOnWidget == 7 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter1Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider7 = scale(filter1Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider7 = 1;
+    );
+    slider_automate(slider7);
   ); 
+  
+  mouseOnWidget == 8 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter2Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider8 = scale(filter2Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider8 = 1;
+    );
+    slider_automate(slider8);
+  );
+  
+  mouseOnWidget == 9 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter3Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider9 = scale(filter3Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider9 = 1;
+    );
+    slider_automate(slider9);
+  );
+  
+  mouseOnWidget == 10 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter4Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider10 = scale(filter4Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider10 = 1;
+    );
+    slider_automate(slider10);
+  );
+  
+  mouseOnWidget == 11 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter5Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider11 = scale(filter5Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider11 = 1;
+    );
+    slider_automate(slider11);
+  );
+  
+  mouseOnWidget == 12 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter6Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
+      slider12 = scale(filter6Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
+    ) : (mouse_cap == 2) ? (
+      slider12 = 1;
+    );
+    slider_automate(slider12);
+  );
+  
+  
+  // Gain widgets
+  mouseOnWidget == 13 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter1Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider13 = scale(filter1Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider13 = 0;
+    );
+    slider_automate(slider13);
+  );
+  
+  mouseOnWidget == 14 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter2Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider14 = scale(filter2Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider14 = 0;
+    );
+    slider_automate(slider14);
+  );
+  
+  mouseOnWidget == 15 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter3Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider15 = scale(filter3Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider15 = 0;
+    );
+    slider_automate(slider15);
+  );
+  
+  mouseOnWidget == 16 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter4Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider16 = scale(filter4Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider16 = 0;
+    );
+    slider_automate(slider16);
+  );
+  
+  mouseOnWidget == 17 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter5Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider17 = scale(filter5Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider17 = 0;
+    );
+    slider_automate(slider17);
+  );
+  
+  mouseOnWidget == 18 ? (
+    mouse_cap == 1 ? (
+      // Addresses increments as well as decrements
+      filter6Gain.knobInc(0.001*(prevMouseY-mouse_y));
+      slider18 = scale(filter6Gain.knobGetSlider(), 0., 1., -18., 18., 1);
+    ) : (mouse_cap == 2) ? (
+      slider18 = 0;
+    );
+    slider_automate(slider18);
+  );
+  
+  updateFiltersAndSliders();
+  
+  // Store current mouse position
+  prevMouseX = mouse_x;
+  prevMouseY = mouse_y;
 ) : (
+  // No active (clicked) widget
   mouseOnWidget = 0;
   
   // Set hover attribute

@@ -9,7 +9,7 @@ import lossius-cookdsp-mods.jsfx-inc
 
 filename:0,orange_dial.png
 
-slider1:75<20,20000>Center Frequency - Filter 1
+slider1:75<20,20000>-Center Frequency - Filter 1
 slider2:100<20,20000>-Center Frequency - Filter 2
 slider3:250<20,20000>-Center Frequency - Filter 3
 slider4:750<20,20000>-Center Frequency - Filter 4
@@ -36,6 +36,8 @@ slider21:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 3
 slider22:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 4
 slider23:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 5
 slider24:2<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 6
+
+slider25:0<-18,20000>(Optional) Enter value for last clicked knob
 
 
 in_pin:1
@@ -309,6 +311,29 @@ f6_4.eq(slider6, q, slider18, slider24);
 *
 ********************************************************/
 @slider
+
+// slider25 sets value of most recently clicked GUI slider
+mouseClick == 1 ? slider1 = clip(slider25, 20, 20000);
+mouseClick == 2 ? slider2 = clip(slider25, 20, 20000);
+mouseClick == 3 ? slider3 = clip(slider25, 20, 20000);
+mouseClick == 4 ? slider4 = clip(slider25, 20, 20000);
+mouseClick == 5 ? slider5 = clip(slider25, 20, 20000);
+mouseClick == 6 ? slider6 = clip(slider25, 20, 20000);
+
+mouseClick ==  7 ? slider7  = clip(slider25, 0.01, 4);
+mouseClick ==  8 ? slider8  = clip(slider25, 0.01, 4);
+mouseClick ==  9 ? slider9  = clip(slider25, 0.01, 4);
+mouseClick == 10 ? slider10 = clip(slider25, 0.01, 4);
+mouseClick == 11 ? slider11 = clip(slider25, 0.01, 4);
+mouseClick == 12 ? slider12 = clip(slider25, 0.01, 4);
+
+mouseClick == 13 ? slider13 = clip(slider25, -18, 18);
+mouseClick == 14 ? slider14 = clip(slider25, -18, 18);
+mouseClick == 15 ? slider15 = clip(slider25, -18, 18);
+mouseClick == 16 ? slider16 = clip(slider25, -18, 18);
+mouseClick == 17 ? slider17 = clip(slider25, -18, 18);
+mouseClick == 18 ? slider18 = clip(slider25, -18, 18);
+
 // Center freq
 f1_1.eq_set_freq(slider1); 
 f1_2.eq_set_freq(slider1);
@@ -503,8 +528,27 @@ filter6Gain.knobSetDisplayedValue(slider18);
 // Mouse interaction
 (mouse_cap > 0) ? (
   (mouseOnWidget == 0) ? (
-    // TODO: Test if mouse is over any of the widgets
-    mouseOnWidget = 1;
+    // mouseClick tracks last clicked widget
+    filter1Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 1;
+    filter2Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 2;
+    filter3Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 3;
+    filter4Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 4;
+    filter5Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 5;
+    filter6Freq.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 6;
+    
+    filter1Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 7;
+    filter2Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 8;
+    filter3Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 9;
+    filter4Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 10;
+    filter5Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 11;
+    filter6Bandwidth.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 12;
+    
+    filter1Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 13;
+    filter2Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 14;
+    filter3Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 15;
+    filter4Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 16;
+    filter5Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 17;
+    filter6Gain.knobMouseOverWidget() ? mouseOnWidget = mouseClick = 18;
   ); 
 ) : (
   mouseOnWidget = 0;

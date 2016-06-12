@@ -1,0 +1,7 @@
+import cookdsp-mods/scaling-extras.jsfx-inc
+import cookdsp-mods/4ch-dynamics.jsfx-inc
+import cookdsp-mods/4ch-granulator.jsfx-inc
+
+@init
+
+;

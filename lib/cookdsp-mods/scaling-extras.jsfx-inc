@@ -1,0 +1,141 @@
+@init
+
+
+/******************************************************* 
+Q2BANDWIDTH
+===========
+
+Convert filter resonance Q to octave bandwidth
+
+Signature
+----------
+
+bw = q2bandwidth(q)
+
+Description
+-----------
+
+The q2bandwidth function takes a filter resonance as 
+argument and returns the corresponding bandwidth
+expressed as octaves (0.5 means a bandwidth of half
+an octave).
+
+Arguments
+---------
+
+- *q* {float} : filter resonance
+
+Return
+------
+
+- *bw* {float} : filterband width as octave
+
+Example
+-------
+
+  // TODO: Substitute example
+
+    desc:Rough Gate
+
+    import cookdsp.jsfx-inc
+
+    slider1:-20<-90,0,0.01>Threshold (dB) 
+
+    @init
+    fol = amp = 0;
+
+    @slider
+    thresh = slider1;
+
+    @sample
+    // mix stereo signal
+    input = (abs(spl0) + abs(spl1)) * 0.707;
+    // follow its amplitude
+    fol = input + (fol - input) * 0.99;
+    // convert amplitude to decibels
+    db = atodb(fol);
+    // compare with db threshold
+    db > thresh ? a = 1 : a = 0;
+    // interpolate new gain value
+    amp = a + (amp - a) * 0.99;
+    // apply to both signals
+    spl0 *= amp; spl1 *= amp;
+
+********************************************************/
+function q2bandwidth(q) local(bw)
+(
+  bw = max(q, 0.001);
+  bw = (1 + sqrt(1 + 4.0*bw*bw)) / (2.*bw);
+  bw = 2. * log(bw) / log(2.);
+  bw;
+);
+
+
+
+/******************************************************* 
+BANDWIDTH2Q
+===========
+
+Convert filter octave bandwidth to resonance Q
+
+Signature
+----------
+
+q = bandwidth2q(bw)
+
+Description
+-----------
+
+The bandwidth2q function takes a filter bandwidth expressed
+as octaves as argument (0.5 means a bandwidth of half an octave)
+and returns the corresponding resonance.
+
+Arguments
+---------
+
+- *bw* {float} : filterband width as octave
+
+Return
+------
+
+- *q* {float} : filter resonance
+
+Example
+-------
+
+  // TODO: Substitute example
+
+    desc:Rough Gate
+
+    import cookdsp.jsfx-inc
+
+    slider1:-20<-90,0,0.01>Threshold (dB) 
+
+    @init
+    fol = amp = 0;
+
+    @slider
+    thresh = slider1;
+
+    @sample
+    // mix stereo signal
+    input = (abs(spl0) + abs(spl1)) * 0.707;
+    // follow its amplitude
+    fol = input + (fol - input) * 0.99;
+    // convert amplitude to decibels
+    db = atodb(fol);
+    // compare with db threshold
+    db > thresh ? a = 1 : a = 0;
+    // interpolate new gain value
+    amp = a + (amp - a) * 0.99;
+    // apply to both signals
+    spl0 *= amp; spl1 *= amp;
+
+********************************************************/
+function bandwidth2q(bw) local(q)
+(
+  q = max(bw, 0.001);
+  q = pow(2., q*0.5);
+  q = 1. / (q - (1. / q));
+  q;
+);

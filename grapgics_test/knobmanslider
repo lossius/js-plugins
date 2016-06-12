@@ -1,0 +1,523 @@
+/*
+TODO:
+- log mapping for freq
+*/
+
+desc:knobman_test
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+filename:0,orange_dial.png
+
+slider1:75<20,20000>Center Frequency - Filter 1
+slider2:100<20,20000>-Center Frequency - Filter 2
+slider3:250<20,20000>-Center Frequency - Filter 3
+slider4:750<20,20000>-Center Frequency - Filter 4
+slider5:2500<20,20000>-Center Frequency - Filter 5
+slider6:7500<20,20000>-Center Frequency - Filter 6
+
+slider7:1<0.01,4,0.01>-Bandwidth (oct) - Filter 1
+slider8:1<0.01,4,0.01>-Bandwidth (oct) - Filter 2
+slider9:1<0.01,4,0.01>-Bandwidth (oct) - Filter 3
+slider10:1<0.01,4,0.01>-Bandwidth (oct) - Filter 4
+slider11:1<0.01,4,0.01>-Bandwidth (oct) - Filter 5
+slider12:1<0.01,4,0.01>-Bandwidth (oct) - Filter 6
+
+slider13:0<-18,18>-Boost/Cut (dB) - Filter 1
+slider14:0<-18,18>-Boost/Cut (dB) - Filter 2
+slider15:0<-18,18>-Boost/Cut (dB) - Filter 3
+slider16:0<-18,18>-Boost/Cut (dB) - Filter 4
+slider17:0<-18,18>-Boost/Cut (dB) - Filter 5
+slider18:0<-18,18>-Boost/Cut (dB) - Filter 6
+
+slider19:0<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 1
+slider20:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 2
+slider21:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 3
+slider22:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 4
+slider23:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 5
+slider24:2<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 6
+
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+@init
+
+kLog20 = log10(20);
+kLog20k = log10(20000);
+
+/******************************************************* 
+KNOB
+====
+
+Draw knob slider with label and numerical value
+
+
+Description
+-----------
+
+The knob object draws a GUI knob with label positioned above, and 
+slider value and unit below. The knob itself makes use of a pict file
+generated using KnobMan or jKnobMan:
+
+http://www.g200kg.com/en/software/knobman.html
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### knob(xPos yPos imagefile numFrames imageWidth imageHeigh label unit) ####
+
+Initialises a knob object with the following initial arguments:
+
+xPos       - Left edge of knob gui including padding and labels
+yPos       - Upper edge of knob gui including padding and labels
+imagefile  - ID of image file containing knobman picture
+numFrames  - The number of frames in the knobman image file
+imageWidth - The width of one frame in the knobman image file
+imageHeigh - The height of one frame in the knobman image file
+label      - Label to be displayed
+unit       - Parameter unit
+
+Methods
+-------
+
+#### knobSetSlider ####
+
+Sets normalised slider value, between 0 and 1.
+
+#### knobSetDisplayedValue(val) ####
+
+Sets the displayed numerical value.
+
+#### knobDraw() ####
+
+Draw knob GUI.
+
+Example
+-------
+
+    desc:Simple Distortion
+
+    import cookdsp.jsfx-inc
+
+    slider1:0.7<0,1>Drive
+    slider2:5000<500,10000>Lowpass Cutoff
+
+    @init
+    disL.disto(slider1, slider2);
+    disR.disto(slider1, slider2);
+
+    @slider
+    disL.disto_set_drive(slider1);
+    disR.disto_set_drive(slider1);
+    disL.disto_set_cutoff(slider2);
+    disR.disto_set_cutoff(slider2);
+
+    @sample
+    amp = scale(slider1, 0, 1, 0.7, 0.4, 2);
+    spl0 = disL.disto_do(spl0) * amp;
+    spl1 = disR.disto_do(spl1) * amp;
+
+********************************************************/
+function knob(xPos yPos imagefile numFrames imageWidth imageHeight label unit)
+(
+  // Geometry of full GUI including padding, label and value display
+  this.x = xPos;
+  this.y = yPos;
+  this.xPad = 10;   // Horisontal padding
+  this.yPad = 20;   // Vertical padding
+  this.width  = imageWidth  + 2*this.xPad;
+  this.height = imageHeight + 2*this.yPad;
+  this.horCenter = this.x + this.xPad + 0.5*imageWidth;
+  
+  // Geometry of knobamn image
+  this.knobX = this.x + this.xPad;
+  this.knobY = this.y + this.yPad;
+  this.knobWidth  = imageWidth;
+  this.knobHeight = imageHeight;
+  
+  // Properties of knobman image file
+  this.knobImageFile = imagefile;
+  this.knobNumFrames = numFrames;
+  
+  // Label
+  this.label = label;
+  this.unit = unit;
+      
+  // Memory assignment, used when drawing images
+  this.coordinatelist = memalloc(10);
+  
+  coordinatelist = this.coordinatelist;
+  
+  coordinatelist[0] = 0.;                     // source_x
+  // coordinatelist[1]                        // source_y depens on slider value
+  coordinatelist[2] = this.knobWidth;         // source_w
+  coordinatelist[3] = this.knobHeight;        // source_h
+  coordinatelist[4] = this.knobX;             // dest_x
+  coordinatelist[5] = this.knobY;             // dest_y
+  coordinatelist[6] = this.knobWidth;         // dest_w
+  coordinatelist[7] = this.knobHeight;        // dest_h
+  coordinatelist[8] = 0; // rotation_x_offset - only used if rotation is set, represents offset from center of image
+  coordinatelist[9] = 0; // rotation_y_offset - only used if rotation is set, represents offset from center of image
+);
+
+function knobSetSlider(val)
+(
+  this.valSlider = clip(val, 0, 1);
+);
+
+function knobSetDisplayedValue(val)
+(
+  this.valDisplay = val;
+);
+
+function knobDraw()
+(
+  // Background
+  gfx_r = 0.7;
+  gfx_g = 0.7;
+  gfx_b = 0.7;
+
+  gfx_rect(this.x, this.y, this.width, this.height);
+  
+  // Source y position depends on slider value
+  coordinatelist = this.coordinatelist;
+  coordinatelist[1] = floor(this.valSlider*(this.knobNumFrames-1) + 0.5)*this.knobHeight; // source_y
+  gfx_blitext(this.knobImageFile, coordinatelist, 0);
+
+  // Draw label
+  gfx_setfont(1,"Helvetica", 12);
+  gfx_r = 0.1;
+  gfx_g = 0.1;
+  gfx_b = 0.1;
+
+  gfx_measurestr(this.label,w,h);
+  gfx_x = this.horCenter-0.5*w;
+  gfx_y = this.y+6;
+  gfx_drawstr(this.label);
+
+  // Draw value and unit
+  gfx_setfont(1,"Helvetica", 11);
+  sprintf(mystring, "%.5g %s", this.valDisplay, this.unit);
+  gfx_measurestr(mystring,w,h);
+  gfx_x = this.horCenter-0.5*w;
+  gfx_y = this.y+this.height-this.yPad+0;
+  gfx_drawstr(mystring);
+);
+
+gfx_clear=-1;
+filter1Freq.knob(50, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter2Freq.knob(130, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter3Freq.knob(210, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter4Freq.knob(290, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter5Freq.knob(370, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter6Freq.knob(450, 100, 0, 101, 50, 50, "Freq", "Hz");
+
+filter1Gain.knob(50, 190, 0, 101, 50, 50, "Gain", "dB");
+filter2Gain.knob(130, 190, 0, 101, 50, 50, "Gain", "dB");
+filter3Gain.knob(210, 190, 0, 101, 50, 50, "Gain", "dB");
+filter4Gain.knob(290, 190, 0, 101, 50, 50, "Gain", "dB");
+filter5Gain.knob(370, 190, 0, 101, 50, 50, "Gain", "dB");
+filter6Gain.knob(450, 190, 0, 101, 50, 50, "Gain", "dB");
+
+filter1Bandwidth.knob(50, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter2Bandwidth.knob(130, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter3Bandwidth.knob(210, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter4Bandwidth.knob(290, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter5Bandwidth.knob(370, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+filter6Bandwidth.knob(450, 280, 0, 101, 50, 50, "Bandwidth", "oct");
+
+q = bandwidth2q(slider7);
+f1_1.eq(slider1, q, slider13, slider19);
+f1_2.eq(slider1, q, slider13, slider19);
+f1_3.eq(slider1, q, slider13, slider19);
+f1_4.eq(slider1, q, slider13, slider19);
+
+q = bandwidth2q(slider8);
+f2_1.eq(slider2, q, slider14, slider20);
+f2_2.eq(slider2, q, slider14, slider20);
+f2_3.eq(slider2, q, slider14, slider20);
+f2_4.eq(slider2, q, slider14, slider20);
+
+q = bandwidth2q(slider9);
+f3_1.eq(slider3, q, slider15, slider21);
+f3_2.eq(slider3, q, slider15, slider21);
+f3_3.eq(slider3, q, slider15, slider21);
+f3_4.eq(slider3, q, slider15, slider21);
+
+q = bandwidth2q(slider10);
+f4_1.eq(slider4, q, slider16, slider22);
+f4_2.eq(slider4, q, slider16, slider22);
+f4_3.eq(slider4, q, slider16, slider22);
+f4_4.eq(slider4, q, slider16, slider22);
+
+q = bandwidth2q(slider11);
+f5_1.eq(slider5, q, slider17, slider23);
+f5_2.eq(slider5, q, slider17, slider23);
+f5_3.eq(slider5, q, slider17, slider23);
+f5_4.eq(slider5, q, slider17, slider23);
+
+q = bandwidth2q(slider12);
+f6_1.eq(slider6, q, slider18, slider24);
+f6_2.eq(slider6, q, slider18, slider24);
+f6_3.eq(slider6, q, slider18, slider24);
+f6_4.eq(slider6, q, slider18, slider24);
+
+@slider
+// Center freq
+f1_1.eq_set_freq(slider1); 
+f1_2.eq_set_freq(slider1);
+f1_3.eq_set_freq(slider1);
+f1_4.eq_set_freq(slider1);
+
+f2_1.eq_set_freq(slider2); 
+f2_2.eq_set_freq(slider2);
+f2_3.eq_set_freq(slider2);
+f2_4.eq_set_freq(slider2);
+
+f3_1.eq_set_freq(slider3); 
+f3_2.eq_set_freq(slider3);
+f3_3.eq_set_freq(slider3);
+f3_4.eq_set_freq(slider3);
+
+f4_1.eq_set_freq(slider4); 
+f4_2.eq_set_freq(slider4);
+f4_3.eq_set_freq(slider4);
+f4_4.eq_set_freq(slider4);
+
+f5_1.eq_set_freq(slider5); 
+f5_2.eq_set_freq(slider5);
+f5_3.eq_set_freq(slider5);
+f5_4.eq_set_freq(slider5);
+
+f6_1.eq_set_freq(slider6); 
+f6_2.eq_set_freq(slider6);
+f6_3.eq_set_freq(slider6);
+f6_4.eq_set_freq(slider6);
+
+// Bandwidth (oct)
+
+q = bandwidth2q(slider7);
+f1_1.eq_set_q(q); 
+f1_2.eq_set_q(q);
+f1_3.eq_set_q(q);
+f1_4.eq_set_q(q);
+
+q = bandwidth2q(slider8);
+f2_1.eq_set_q(q); 
+f2_2.eq_set_q(q);
+f2_3.eq_set_q(q);
+f2_4.eq_set_q(q);
+
+q = bandwidth2q(slider8);
+f3_1.eq_set_q(q); 
+f3_2.eq_set_q(q);
+f3_3.eq_set_q(q);
+f3_4.eq_set_q(q);
+
+q = bandwidth2q(slider9);
+f4_1.eq_set_q(q); 
+f4_2.eq_set_q(q);
+f4_3.eq_set_q(q);
+f4_4.eq_set_q(q);
+
+q = bandwidth2q(slider11);
+f5_1.eq_set_q(q); 
+f5_2.eq_set_q(q);
+f5_3.eq_set_q(q);
+f5_4.eq_set_q(q);
+
+q = bandwidth2q(slider12);
+f6_1.eq_set_q(q); 
+f6_2.eq_set_q(q);
+f6_3.eq_set_q(q);
+f6_4.eq_set_q(q);
+
+// Gain
+
+f1_1.eq_set_boost(slider13);
+f1_2.eq_set_boost(slider13);
+f1_3.eq_set_boost(slider13);
+f1_4.eq_set_boost(slider13);
+
+f2_1.eq_set_boost(slider14);
+f2_2.eq_set_boost(slider14);
+f2_3.eq_set_boost(slider14);
+f2_4.eq_set_boost(slider14);
+
+f3_1.eq_set_boost(slider15);
+f3_2.eq_set_boost(slider15);
+f3_3.eq_set_boost(slider15);
+f3_4.eq_set_boost(slider15);
+
+f4_1.eq_set_boost(slider16);
+f4_2.eq_set_boost(slider16);
+f4_3.eq_set_boost(slider16);
+f4_4.eq_set_boost(slider16);
+
+f5_1.eq_set_boost(slider17);
+f5_2.eq_set_boost(slider17);
+f5_3.eq_set_boost(slider17);
+f5_4.eq_set_boost(slider17);
+
+f6_1.eq_set_boost(slider18);
+f6_2.eq_set_boost(slider18);
+f6_3.eq_set_boost(slider18);
+f6_4.eq_set_boost(slider18);
+
+// Filter type
+
+f1_1.eq_set_type(slider19);
+f1_2.eq_set_type(slider19);
+f1_3.eq_set_type(slider19);
+f1_4.eq_set_type(slider19);
+
+f2_1.eq_set_type(slider20);
+f2_2.eq_set_type(slider20);
+f2_3.eq_set_type(slider20);
+f2_4.eq_set_type(slider20);
+
+f3_1.eq_set_type(slider21);
+f3_2.eq_set_type(slider21);
+f3_3.eq_set_type(slider21);
+f3_4.eq_set_type(slider21);
+
+f4_1.eq_set_type(slider22);
+f4_2.eq_set_type(slider22);
+f4_3.eq_set_type(slider22);
+f4_4.eq_set_type(slider22);
+
+f5_1.eq_set_type(slider23);
+f5_2.eq_set_type(slider23);
+f5_3.eq_set_type(slider23);
+f5_4.eq_set_type(slider23);
+
+f6_1.eq_set_type(slider24);
+f6_2.eq_set_type(slider24);
+f6_3.eq_set_type(slider24);
+f6_4.eq_set_type(slider24);
+
+// Filter freq knobs
+//temp = log10(slider1);
+aaTest = log10(slider1);
+abTEST = scale(log10(slider1), kLog20, kLog20k, 0., 1., 1);
+
+
+filter1Freq.knobSetSlider( scale(log10(slider1), kLog20, kLog20k, 0., 1., 1) );
+filter2Freq.knobSetSlider( scale(log10(slider2), kLog20, kLog20k, 0., 1., 1) );
+filter3Freq.knobSetSlider( scale(log10(slider3), kLog20, kLog20k, 0., 1., 1) );
+filter4Freq.knobSetSlider( scale(log10(slider4), kLog20, kLog20k, 0., 1., 1) );
+filter5Freq.knobSetSlider( scale(log10(slider5), kLog20, kLog20k, 0., 1., 1) );
+filter6Freq.knobSetSlider( scale(log10(slider6), kLog20, kLog20k, 0., 1., 1) );
+
+filter1Freq.knobSetDisplayedValue(slider1);
+filter2Freq.knobSetDisplayedValue(slider2);
+filter3Freq.knobSetDisplayedValue(slider3);
+filter4Freq.knobSetDisplayedValue(slider4);
+filter5Freq.knobSetDisplayedValue(slider5);
+filter6Freq.knobSetDisplayedValue(slider6);
+
+// Filter BW knobs
+filter1Bandwidth.knobSetSlider(scale(slider7,  0.01, 4, 0., 1., 1));
+filter2Bandwidth.knobSetSlider(scale(slider8,  0.01, 4, 0., 1., 1));
+filter3Bandwidth.knobSetSlider(scale(slider9,  0.01, 4, 0., 1., 1));
+filter4Bandwidth.knobSetSlider(scale(slider10, 0.01, 4, 0., 1., 1));
+filter5Bandwidth.knobSetSlider(scale(slider11, 0.01, 4, 0., 1., 1));
+filter6Bandwidth.knobSetSlider(scale(slider12, 0.01, 4, 0., 1., 1));
+
+filter1Bandwidth.knobSetDisplayedValue(slider7);
+filter2Bandwidth.knobSetDisplayedValue(slider8);
+filter3Bandwidth.knobSetDisplayedValue(slider9);
+filter4Bandwidth.knobSetDisplayedValue(slider10);
+filter5Bandwidth.knobSetDisplayedValue(slider11);
+filter6Bandwidth.knobSetDisplayedValue(slider12);
+
+// Filter gain knobs
+filter1Gain.knobSetSlider(scale(slider13, -18., 18., 0., 1., 1.));
+filter2Gain.knobSetSlider(scale(slider14, -18., 18., 0., 1., 1.));
+filter3Gain.knobSetSlider(scale(slider15, -18., 18., 0., 1., 1.));
+filter4Gain.knobSetSlider(scale(slider16, -18., 18., 0., 1., 1.));
+filter5Gain.knobSetSlider(scale(slider17, -18., 18., 0., 1., 1.));
+filter6Gain.knobSetSlider(scale(slider18, -18., 18., 0., 1., 1.));
+
+filter1Gain.knobSetDisplayedValue(slider13);
+filter2Gain.knobSetDisplayedValue(slider14);
+filter3Gain.knobSetDisplayedValue(slider15);
+filter4Gain.knobSetDisplayedValue(slider16);
+filter5Gain.knobSetDisplayedValue(slider17);
+filter6Gain.knobSetDisplayedValue(slider18);
+
+@gfx 520 300
+
+// Background
+gfx_r = 0.6;
+gfx_g = 0.6;
+gfx_b = 0.6;
+
+//gfx_rect(50, 50, 150, 150);
+
+
+filter1Freq.knobDraw();
+filter2Freq.knobDraw();
+filter3Freq.knobDraw();
+filter4Freq.knobDraw();
+filter5Freq.knobDraw();
+filter6Freq.knobDraw();
+
+filter1Gain.knobDraw();
+filter2Gain.knobDraw();
+filter3Gain.knobDraw();
+filter4Gain.knobDraw();
+filter5Gain.knobDraw();
+filter6Gain.knobDraw();
+
+filter1Bandwidth.knobDraw();
+filter2Bandwidth.knobDraw();
+filter3Bandwidth.knobDraw();
+filter4Bandwidth.knobDraw();
+filter5Bandwidth.knobDraw();
+filter6Bandwidth.knobDraw();
+
+
+@sample
+// Cascading filterbank
+spl0 = f1_1.eq_do(spl0);
+spl1 = f1_2.eq_do(spl1);
+spl2 = f1_3.eq_do(spl2);
+spl3 = f1_4.eq_do(spl3);
+
+spl0 = f2_1.eq_do(spl0);
+spl1 = f2_2.eq_do(spl1);
+spl2 = f2_3.eq_do(spl2);
+spl3 = f2_4.eq_do(spl3);
+
+spl0 = f3_1.eq_do(spl0);
+spl1 = f3_2.eq_do(spl1);
+spl2 = f3_3.eq_do(spl2);
+spl3 = f3_4.eq_do(spl3);
+
+spl0 = f4_1.eq_do(spl0);
+spl1 = f4_2.eq_do(spl1);
+spl2 = f4_3.eq_do(spl2);
+spl3 = f4_4.eq_do(spl3);
+
+spl0 = f5_1.eq_do(spl0);
+spl1 = f5_2.eq_do(spl1);
+spl2 = f5_3.eq_do(spl2);
+spl3 = f5_4.eq_do(spl3);
+
+spl0 = f6_1.eq_do(spl0);
+spl1 = f6_2.eq_do(spl1);
+spl2 = f6_3.eq_do(spl2);
+spl3 = f6_4.eq_do(spl3);

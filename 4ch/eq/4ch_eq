@@ -5,7 +5,7 @@ import lossius-cookdsp-mods.jsfx-inc
 
 filename:0,../../lib/graphics/orange_dial.png
 
-slider1:75<20,20000,0.1>Center Frequency - Filter 1
+slider1:75<20,20000,0.1>-Center Frequency - Filter 1
 slider2:100<20,20000,0.1>-Center Frequency - Filter 2
 slider3:250<20,20000,0.1>-Center Frequency - Filter 3
 slider4:750<20,20000,0.1>-Center Frequency - Filter 4

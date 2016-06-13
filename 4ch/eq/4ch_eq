@@ -3,7 +3,13 @@ desc:4ch_eq - 6 band Equalizer (cookdsp) (Lossius)
 import cookdsp.jsfx-inc
 import lossius-cookdsp-mods.jsfx-inc
 
-filename:0,../../lib/graphics/orange_dial.png
+filename:0,../../lib/graphics/OrangeDial.png
+filename:1,../../lib/graphics/YellowDial.png
+filename:2,../../lib/graphics/CharteuseGreenDial.png
+filename:3,../../lib/graphics/SpringGreenDial.png
+filename:4,../../lib/graphics/AzureDial.png
+filename:5,../../lib/graphics/MagentaDial.png
+
 
 slider1:75<20,20000,0.1>-Center Frequency - Filter 1
 slider2:100<20,20000,0.1>-Center Frequency - Filter 2
@@ -242,26 +248,26 @@ function updateFiltersAndSliders()
 gfx_clear=-1;
 
 // Set up knobs
-filter1Freq.knob( 50, 100, 0, 101, 50, 50, "Freq", "Hz");
-filter2Freq.knob(130, 100, 0, 101, 50, 50, "Freq", "Hz");
-filter3Freq.knob(210, 100, 0, 101, 50, 50, "Freq", "Hz");
-filter4Freq.knob(290, 100, 0, 101, 50, 50, "Freq", "Hz");
-filter5Freq.knob(370, 100, 0, 101, 50, 50, "Freq", "Hz");
-filter6Freq.knob(450, 100, 0, 101, 50, 50, "Freq", "Hz");
+filter1Freq.knob( 50, 220, 0, 101, 50, 50, "Freq", "Hz");
+filter2Freq.knob(130, 220, 1, 101, 50, 50, "Freq", "Hz");
+filter3Freq.knob(210, 220, 2, 101, 50, 50, "Freq", "Hz");
+filter4Freq.knob(290, 220, 3, 101, 50, 50, "Freq", "Hz");
+filter5Freq.knob(370, 220, 4, 101, 50, 50, "Freq", "Hz");
+filter6Freq.knob(450, 220, 5, 101, 50, 50, "Freq", "Hz");
 
-filter1Bandwidth.knob( 50, 195, 0, 101, 50, 50, "Bandwidth", "oct");
-filter2Bandwidth.knob(130, 195, 0, 101, 50, 50, "Bandwidth", "oct");
-filter3Bandwidth.knob(210, 195, 0, 101, 50, 50, "Bandwidth", "oct");
-filter4Bandwidth.knob(290, 195, 0, 101, 50, 50, "Bandwidth", "oct");
-filter5Bandwidth.knob(370, 195, 0, 101, 50, 50, "Bandwidth", "oct");
-filter6Bandwidth.knob(450, 195, 0, 101, 50, 50, "Bandwidth", "oct");
+filter1Bandwidth.knob( 50, 310, 0, 101, 50, 50, "Bandwidth", "oct");
+filter2Bandwidth.knob(130, 310, 1, 101, 50, 50, "Bandwidth", "oct");
+filter3Bandwidth.knob(210, 310, 2, 101, 50, 50, "Bandwidth", "oct");
+filter4Bandwidth.knob(290, 310, 3, 101, 50, 50, "Bandwidth", "oct");
+filter5Bandwidth.knob(370, 310, 4, 101, 50, 50, "Bandwidth", "oct");
+filter6Bandwidth.knob(450, 310, 5, 101, 50, 50, "Bandwidth", "oct");
 
-filter1Gain.knob(50,  290, 0, 101, 50, 50, "Gain", "dB");
-filter2Gain.knob(130, 290, 0, 101, 50, 50, "Gain", "dB");
-filter3Gain.knob(210, 290, 0, 101, 50, 50, "Gain", "dB");
-filter4Gain.knob(290, 290, 0, 101, 50, 50, "Gain", "dB");
-filter5Gain.knob(370, 290, 0, 101, 50, 50, "Gain", "dB");
-filter6Gain.knob(450, 290, 0, 101, 50, 50, "Gain", "dB");
+filter1Gain.knob(50,  400, 0, 101, 50, 50, "Gain", "dB");
+filter2Gain.knob(130, 400, 1, 101, 50, 50, "Gain", "dB");
+filter3Gain.knob(210, 400, 2, 101, 50, 50, "Gain", "dB");
+filter4Gain.knob(290, 400, 3, 101, 50, 50, "Gain", "dB");
+filter5Gain.knob(370, 400, 4, 101, 50, 50, "Gain", "dB");
+filter6Gain.knob(450, 400, 5, 101, 50, 50, "Gain", "dB");
 
 
 // Set up filters
@@ -342,7 +348,7 @@ updateFiltersAndSliders();
 * Graphics
 *
 ********************************************************/
-@gfx 520 300
+@gfx 570 500
 
 // Mouse interaction
 (mouse_cap > 0) ? (
@@ -616,12 +622,8 @@ updateFiltersAndSliders();
 
 
 // Background
-gfx_r = 0.7;
-gfx_g = 0.7;
-gfx_b = 0.7;
-
+setRGB(0.7, 0.7, 0.7);
 gfx_rect(0, 0, gfx_w, gfx_h);
-
 
 filter1Freq.knobDraw();
 filter2Freq.knobDraw();
@@ -643,6 +645,66 @@ filter3Bandwidth.knobDraw();
 filter4Bandwidth.knobDraw();
 filter5Bandwidth.knobDraw();
 filter6Bandwidth.knobDraw();
+
+// Filter response curves
+setRGB(0.0, 0.0, 0.0);
+gfx_rect(60,30,450,180);
+
+setRGB(0.5, 0.5, 0.5);
+
+// Vertical lines - Hz
+function drawFreqLines(freq, label)
+(
+  x = scale(log10(freq), kLog20, kLog20k, 60., 510, 1);
+  gfx_line(x, 30, x, 210, 1);
+  gfx_measurestr(label, w, h);
+  gfx_x = x - 0.5*w;
+  gfx_y = 16;
+  gfx_drawstr(label);
+);
+
+drawFreqLines(    31.25, "31.25");
+drawFreqLines(    62.50, "62.5");
+drawFreqLines(   125.00, "125");
+drawFreqLines(   250.00, "250");
+drawFreqLines(   500.00, "500");
+drawFreqLines(  1000.00, "1k");
+drawFreqLines(  2000.00, "2k");
+drawFreqLines(  4000.00, "4k");
+drawFreqLines(  8000.00, "8k");
+drawFreqLines( 16000.00, "16k");
+
+// Horisontal lines - dB
+gfx_line(60,  60, 510,  60, 1);
+gfx_line(60,  90, 510,  90, 1);
+gfx_line(60, 150, 510, 150, 1);
+gfx_line(60, 180, 510, 180, 1);
+
+function drawDbLabel(label)
+(
+  gfx_measurestr(label, w, h);
+  gfx_x = 524 -0.5*w;
+  gfx_drawstr(label);
+  gfx_y += 30;
+);
+
+gfx_y = 31 - 0.5*h;
+drawDbLabel("18");
+drawDbLabel("12");
+drawDbLabel("6");
+drawDbLabel("0");
+drawDbLabel("-6");
+drawDbLabel("-12");
+drawDbLabel("-18");
+
+// Borders
+setRGB(0.9, 0.9, 0.9);
+gfx_line(60,  30, 510,  30, 1);
+gfx_line(60, 120, 510, 120, 1);
+gfx_line(60, 210, 510, 210, 1);
+
+gfx_line( 60, 30,  60, 210, 1);
+gfx_line(510, 30, 510, 210, 1);
 
 
 /********************************************************

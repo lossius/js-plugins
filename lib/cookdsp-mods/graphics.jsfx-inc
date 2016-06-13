@@ -1,6 +1,107 @@
 @init
 
 /******************************************************* 
+SETRGB
+======
+
+Midi to frequency conversion.
+
+Signature
+----------
+
+setRGB(red green blue)
+
+Description
+-----------
+
+Sets opaque RGB drawing colour.
+
+Arguments
+---------
+
+- *red* {float} : Red color in 0..1 range
+- *blue* {float} : Green color in 0..1 range
+- *green* {float} : Blue color in 0..1 range
+
+********************************************************/
+function setRGB(red green blue)
+(
+  gfx_r = red;
+  gfx_g = green;
+  gfx_b = blue;
+  gfx_a = 1.0;
+);
+
+
+/******************************************************* 
+SETALPHA
+========
+
+Midi to frequency conversion.
+
+Signature
+----------
+
+setAlpha(alpha)
+
+Description
+-----------
+
+Sets alpha drawing colour.
+
+Arguments
+---------
+
+- *alpha* {float} : Alpha transaprency value in 0..1 range.
+
+An alpha value of 0 is fully transparent, and an alpha 
+value of 1 is fully opaque.
+
+********************************************************/
+function setAlpha(alpha)
+(
+  gfx_a = alpha;
+);
+
+
+/******************************************************* 
+SETRGBA
+=======
+
+Midi to frequency conversion.
+
+Signature
+----------
+
+setRGBA(red green blue alpha)
+
+Description
+-----------
+
+Sets RGB drawing colour.
+
+Arguments
+---------
+
+- *red* {float} : Red color in 0..1 range
+- *blue* {float} : Green color in 0..1 range
+- *green* {float} : Blue color in 0..1 range
+- *alpha* {float} : Alpha transaprency value in 0..1 range.
+
+An alpha value of 0 is fully transparent, and an alpha 
+value of 1 is fully opaque.
+
+********************************************************/
+function setRGBA(red green blue alpha)
+(
+  gfx_r = red;
+  gfx_g = green;
+  gfx_b = blue;
+  gfx_a = alpha;
+);
+
+
+/******************************************************* 
 KNOB
 ====
 
@@ -183,16 +284,12 @@ function knobMouseOverWidget()
 function knobDraw()
 (
   // Background colour
-  gfx_r = 0.7;
-  gfx_g = 0.7;
-  gfx_b = 0.7;
+  setRGB(0.7, 0.7, 0.7);
   gfx_rect(this.x, this.y, this.width, this.height);
   
   // hover status
   (this.hover) ? (
-    gfx_r = 0.6;
-    gfx_g = 0.6;
-    gfx_b = 0.6;
+    setRGB(0.6, 0.6, 0.6);
     gfx_roundrect(this.x+1, this.y+1, this.width-3, this.height-3, 8, 1);
   );
 
@@ -203,9 +300,7 @@ function knobDraw()
 
   // Draw label
   gfx_setfont(1,"Helvetica", 12);
-  gfx_r = 0.1;
-  gfx_g = 0.1;
-  gfx_b = 0.1;
+  setRGB(0.1, 0.1, 0.1);
 
   gfx_measurestr(this.label,w,h);
   gfx_x = this.horCenter-0.5*w;
@@ -220,3 +315,9 @@ function knobDraw()
   gfx_y = this.y+this.height-this.yPad+0;
   gfx_drawstr(mystring);
 );
+
+
+
+
+
+

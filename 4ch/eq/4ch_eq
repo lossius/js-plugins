@@ -110,13 +110,13 @@ function updateFiltersAndSliders()
   f2_3.eq_set_q(q);
   f2_4.eq_set_q(q);
 
-  q = bandwidth2q(slider8);
+  q = bandwidth2q(slider9);
   f3_1.eq_set_q(q); 
   f3_2.eq_set_q(q);
   f3_3.eq_set_q(q);
   f3_4.eq_set_q(q);
 
-  q = bandwidth2q(slider9);
+  q = bandwidth2q(slider10);
   f4_1.eq_set_q(q); 
   f4_2.eq_set_q(q);
   f4_3.eq_set_q(q);

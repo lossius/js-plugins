@@ -16,6 +16,7 @@ Download and install:
 Changelog
 ---------
 
+* 2016-06-12: Adding graphics library with a KnobMan-based GUI slider widget. Adding 4 channel 6 band EQ.
 * 2016-01-06: This library now depends on the awesome [coocdsp](http://ajaxsoundstudio.com/software/cookdsp/).
 * 2015-11-01: Repurposing this repo for general JSFX plugins. Ambisonic plugins are now maintained as [Ambisonic Toolkit for Reaper](http://www.ambisonictoolkit.net).
 

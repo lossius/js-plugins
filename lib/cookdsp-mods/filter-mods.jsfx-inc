@@ -1,0 +1,45 @@
+/*
+This file is a modification by Trond Lossius of code from cookdsp.
+*/
+
+/////////////////////////////////////////////////////////////////
+// cookdsp is copyright (c) - 2015 - Olivier Belanger          //
+// Permission to use, copy, modify, and/or distribute this     //
+// software for any purpose with or without fee is hereby      //
+// granted, provided that the above copyright notice and this  //
+// permission notice appear in all copies. CookDSP IS PROVIDED //
+// "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.      //
+/////////////////////////////////////////////////////////////////
+
+@init
+
+/*
+EQ
+===
+
+Equalizer filter extensions
+
+#### eq_set_freq(freq) ####
+
+Query magnitude of filter response at `freq`, returns filter desponse as dB
+
+Source: http://musicdsp.org/showArchiveComment.php?ArchiveID=108
+
+*/
+function eq_query_magnitude(freq) local(w)
+(  
+  w = (2*freq*$pi)/srate;
+  
+  // Calculate and return gain in dB
+  10*log10(
+    (
+      this.a0*this.a0 + this.a1*this.a1 + this.a2*this.a2 +
+      2*(this.a0*this.a1 + this.a1*this.a2)*cos(w) + 
+      2*(this.a0*this.a2)*cos(2*w)
+    ) / (
+      this.b0*this.b0 + this.b1*this.b1 + this.b2*this.b2 +
+      2*(this.b0*this.b1 + this.b1*this.b2)*cos(w) + 
+      2*(this.b0*this.b2)*cos(2*w)
+    )
+  );
+);

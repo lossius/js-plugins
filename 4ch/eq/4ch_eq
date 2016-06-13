@@ -32,12 +32,12 @@ slider16:0<-18,18>-Boost/Cut (dB) - Filter 4
 slider17:0<-18,18>-Boost/Cut (dB) - Filter 5
 slider18:0<-18,18>-Boost/Cut (dB) - Filter 6
 
-slider19:0<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 1
-slider20:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 2
-slider21:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 3
-slider22:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 4
-slider23:1<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 5
-slider24:2<0,2,1{Lowshelf,Peak/Notch,Highshelf}>Type - Filter 6
+slider19:1<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 1
+slider20:0<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 2
+slider21:0<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 3
+slider22:0<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 4
+slider23:0<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 5
+slider24:2<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Type - Filter 6
 
 slider25:0<-18,20000>(Optional) Enter value for last clicked knob
 
@@ -459,7 +459,7 @@ updateFiltersAndSliders();
       filter1Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider7 = scale(filter1Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider7 = 1;
+      slider7 = 2;
     );
     slider_automate(slider7);
   ); 
@@ -470,7 +470,7 @@ updateFiltersAndSliders();
       filter2Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider8 = scale(filter2Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider8 = 1;
+      slider8 = 2;
     );
     slider_automate(slider8);
   );
@@ -481,7 +481,7 @@ updateFiltersAndSliders();
       filter3Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider9 = scale(filter3Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider9 = 1;
+      slider9 = 2;
     );
     slider_automate(slider9);
   );
@@ -492,7 +492,7 @@ updateFiltersAndSliders();
       filter4Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider10 = scale(filter4Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider10 = 1;
+      slider10 = 2;
     );
     slider_automate(slider10);
   );
@@ -503,7 +503,7 @@ updateFiltersAndSliders();
       filter5Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider11 = scale(filter5Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider11 = 1;
+      slider11 = 2;
     );
     slider_automate(slider11);
   );
@@ -514,7 +514,7 @@ updateFiltersAndSliders();
       filter6Bandwidth.knobInc(0.001*(prevMouseY-mouse_y));
       slider12 = scale(filter6Bandwidth.knobGetSlider(), 0., 1., 0.01, 4., 1);
     ) : (mouse_cap == 2) ? (
-      slider12 = 1;
+      slider12 = 2;
     );
     slider_automate(slider12);
   );
@@ -650,7 +650,67 @@ filter6Bandwidth.knobDraw();
 setRGB(0.0, 0.0, 0.0);
 gfx_rect(60,30,450,180);
 
-setRGB(0.5, 0.5, 0.5);
+i_gfx = 0;
+loop(450,
+  freq = pow(10, scale(i_gfx, 0., 450, kLog20, kLog20k, 1));
+  gainAccum = 1.0;
+  
+  setRGBA(1.0, 0.5, 0.0, 0.7);
+  gain = f1_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(1.0, 1.0, 0.0, 0.7);
+  gain = f2_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(0.5, 1.0, 0.0, 0.7);
+  gain = f3_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(0.0, 1.0, 0.5, 0.7);
+  gain = f4_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(0.0, 0.5, 1.0, 0.7);
+  gain = f5_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(1.0, 0.0, 1.0, 0.7);
+  gain = f6_1.eq_query_magnitude(freq);
+  gainAccum = gainAccum*dbtoa(gain);
+  gain = clip(gain, -18., 18.);
+  gain = scale(gain, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gain, 1.);
+  
+  setRGBA(0.5, 0.5, 0.5, 0.5);
+  gainAccum = atodb(gainAccum);
+  gainAccum = clip(gainAccum, -18., 18.);
+  gainAccum = scale(gainAccum, 18., -18., 210., 30, 1);
+  gfx_line(i_gfx+60, 120., i_gfx+60, gainAccum, 1.);
+  
+  setRGBA(1.0, 1.0., 1.0, 1.0);
+  //gfx_line(i_gfx+60, gainAccum-0.5, i_gfx+60, gainAccum+0.5, 1.);
+  
+  gfx_circle(i_gfx+60,gainAccum,0.6,1,1);
+  
+  i_gfx += 1;
+);
+
 
 // Vertical lines - Hz
 function drawFreqLines(freq, label)
@@ -663,6 +723,7 @@ function drawFreqLines(freq, label)
   gfx_drawstr(label);
 );
 
+setRGB(0.5, 0.5, 0.5);
 drawFreqLines(    31.25, "31.25");
 drawFreqLines(    62.50, "62.5");
 drawFreqLines(   125.00, "125");

@@ -1,0 +1,55 @@
+desc:4ch Filters - 2nd order Butterworth Highpass Filter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+
+slider1:3500<20,10000, 0.1>Cutoff Frequency In Hz
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+
+
+/********************************************************
+*
+* Init
+*
+********************************************************/
+@init
+
+filt1.buthp(slider1);
+filt2.buthp(slider1);
+filt3.buthp(slider1);
+filt4.buthp(slider1);
+
+
+/********************************************************
+*
+* Sliders
+*
+********************************************************/
+@slider
+
+filt1.buthp_set_freq(slider1);
+filt2.buthp_set_freq(slider1);
+filt3.buthp_set_freq(slider1);
+filt4.buthp_set_freq(slider1);
+
+
+
+/********************************************************
+*
+* Sample processing
+*
+********************************************************/
+@sample
+
+spl0 = filt1.buthp_do(spl0);
+spl1 = filt2.buthp_do(spl1);
+spl2 = filt3.buthp_do(spl2);
+spl3 = filt4.buthp_do(spl3);

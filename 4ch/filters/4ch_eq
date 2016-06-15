@@ -1,4 +1,4 @@
-desc:4ch_eq - 6 band Equalizer (cookdsp) (Lossius)
+desc:4ch Filters - 6 band Equalizer (cookdsp) (Lossius)
 
 import cookdsp.jsfx-inc
 import lossius-cookdsp-mods.jsfx-inc

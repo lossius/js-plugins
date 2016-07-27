@@ -1,9 +1,9 @@
-desc:Linkwitz-Riley 4th Order Highpass Filter
+desc:Stereo Filters - Linkwitz-Riley 4th Order Highpass Filter (cookdsp) (Lossius)
 
 import cookdsp.jsfx-inc
 import lossius-cookdsp-mods.jsfx-inc
 
-slider1:3500<100,10000>Cutoff Frequency In Hz
+slider1:3500<20,18000>Cutoff Frequency In Hz
 
 @init
 // Initializes the filter

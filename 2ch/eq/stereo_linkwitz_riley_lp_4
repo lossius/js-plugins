@@ -1,0 +1,20 @@
+desc:Linkwitz-Riley 4th Order Lowpass Filter
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:3500<100,10000>Cutoff Frequency In Hz
+
+@init
+// Initializes the filter
+filt1.linkwitz_riley_lowpass_4(slider1);
+filt2.linkwitz_riley_lowpass_4(slider1);
+
+@slider
+filt1.linkwitz_riley_lowpass_4_set_freq(slider1);
+filt2.linkwitz_riley_lowpass_4_set_freq(slider1);
+
+@sample
+// Filters the input signal
+spl0 = filt1.linkwitz_riley_lowpass_4_do(spl0);
+spl1 = filt2.linkwitz_riley_lowpass_4_do(spl1);

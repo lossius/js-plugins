@@ -110,11 +110,11 @@ Example
 function _buthp1_compute_coeffs(freq)
 (
     this.freq = clip(freq, 1.0, this.ny);
-	c_ = 2*$pi*this.freq;
-	c2_ = c_/tan($pi*this.freq/srate);
-  	this.a0 = c2_/(c2_+c_); 
-  	this.a1 = -this.a0;
-  	this.b1 = (c_-c2_)/(c2_+c_);
+    c_ = 2*$pi*this.freq;
+    c2_ = c_/tan($pi*this.freq/srate);
+      this.a0 = c2_/(c2_+c_); 
+      this.a1 = -this.a0;
+      this.b1 = (c_-c2_)/(c2_+c_);
 );
 
 function buthp1(freq)
@@ -137,4 +137,373 @@ function buthp1_do(signal)
     // tmp_ = this.a0 * signal + this.a1 * this.x1 - this.b1 * this.y1;
     this.x1 = signal; this.y1 = tmp_;
     tmp_;
+);
+
+
+
+
+/******************************************************* 
+LINKWITZ_RILEY_LOWPASS_4
+=========================
+
+Fourth-order Linkwitz Riley lowpass filter.
+
+Description
+-----------
+
+The linkwitz_riley_lowpass_4 object initializes a fourth-order IIR Linkwitz Riley 
+lowpass filter. It takes the cutoff frequency, in Hz, as argument.
+
+A Linkwitz–Riley (L-R) filter is an infinite impulse response filter used in
+Linkwitz–Riley audio crossovers, named after its inventors Siegfried Linkwitz and
+Russ Riley, which was originally described in Active Crossover Networks for
+Noncoincident Drivers in JAES Volume 24 Issue 1 pp. 2-8; February 1976. It is also
+known as a Butterworth squared filter. An L-R crossover consists of a parallel
+combination of a low-pass and a high-pass L-R filter. The filters are usually
+designed by cascading two Butterworth filters, each of which has −3 dB gain at the
+cut-off frequency. The resulting Linkwitz–Riley filter has a −6 dB gain at the
+cutoff frequency. This means that summing the low-pass and high-pass outputs, the
+gain at the crossover frequency will be 0 dB, so the crossover behaves like an
+all-pass filter, having a flat amplitude response with a smoothly changing phase
+response. This is the biggest advantage of L-R crossovers compared to Butterworth
+crossovers, whose summed output has a +3 dB peak around the crossover frequency.
+Since cascading two nth order Butterworth filters will give a 2nd order
+Linkwitz–Riley filter, theoretically any 2nd order Linkwitz–Riley crossover can be
+designed. However, crossovers of higher order than 4th may have less usability due
+to their increasing peak in group delay around crossover frequency and complexity.
+
+(Source: https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter)
+
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### linkwitz_riley_lowpass_4(freq) ####
+
+Initializes a lowpass filter with `freq` as the cutoff frequency.
+
+Methods
+-------
+
+#### linkwitz_riley_lowpass_4_set_freq(freq) ####
+
+Sets a new cutoff frequency `freq`, in Hz.
+
+#### linkwitz_riley_lowpass_4_do(signal) ####
+
+Processes one samples of an input signal `signal` and outputs
+the filtered sample.
+
+Example
+-------
+
+    desc:Linkwitz-Riley 4th Order lowpass Filter
+
+    import cookdsp.jsfx-inc
+
+    slider1:3500<100,10000>Cutoff Frequency In Hz
+
+    @init
+    // Initializes the filter
+    filt1.linkwitz_riley_lowpass_4(slider1);
+    filt2.linkwitz_riley_lowpass_4(slider1);
+
+    @slider
+    filt1.linkwitz_riley_lowpass_4_set_freq(slider1);
+    filt2.linkwitz_riley_lowpass_4_set_freq(slider1);
+
+    @sample
+    // Filters the input signal
+    spl0 = filt1.linkwitz_riley_lowpass_4_do(spl0);
+    spl1 = filt2.linkwitz_riley_lowpass_4_do(spl1);
+
+********************************************************/
+function _linkwitz_riley_lowpass_4_clear()
+(
+    this.x4 = 0.0;
+    this.x3 = 0.0;
+    this.x2 = 0.0;
+    this.x1 = 0.0;
+    this.y4 = 0.0;
+    this.y3 = 0.0;
+    this.y2 = 0.0;
+    this.y1 = 0.0;
+);
+
+function _linkwitz_riley_lowpass_4_compute_coeffs(freq)
+(
+    // This filter is not meant for dynamic frequency adjustments, and attenpts to do so can produce spikes
+    // In order to avoid this, the filter is cleared whenever the frequency is changed
+    this._linkwitz_riley_lowpass_4_clear();
+    
+    this.freq = clip(freq, 1.0, this.ny);
+    
+    this.sqrt2 = sqrt(2.);
+    this.radians = 2*$pi*this.freq;
+    this.k =  this.radians/tan($pi*this.freq/srate); // kTTTwoPi*frequency/tan(kTTPi*frequency/sr);
+    
+    this.temp = (
+        4*pow(this.radians,2)*pow(this.k,2)
+        + 2*this.sqrt2*pow(this.radians,3)*this.k+pow(this.k,4)
+        + 2*this.sqrt2*this.radians*pow(this.k,3)
+        + pow(this.radians,4)
+    );
+            
+    this.a0 =     pow(this.radians,4) / this.temp;    
+    this.a1 = 4 * pow(this.radians,4) / this.temp;
+    this.a2 = 6 * pow(this.radians,4) / this.temp;
+    //this.a3 = this.a1;// 4*pow(this.radians,4) / this.temp;
+    //this.a4 = this.a0;//   pow(this.radians,4) / this.temp;
+    
+    this.b1 = (
+        4 * pow(this.radians,4) 
+        + 4 * this.sqrt2 * pow(this.radians,3) * this.k 
+        - 4 * pow(this.k,4) 
+        - 4 * this.sqrt2 * this.radians * pow(this.k,3) 
+    ) / this.temp;
+    
+    this.b2 = (
+        6*pow(this.radians,4) 
+        - 8 * pow(this.radians,2) * pow(this.k,2) 
+        + 6 * pow(this.k,4)
+    ) / this.temp;
+    
+    this.b3 = (
+        -4*this.sqrt2*pow(this.radians,3)*this.k 
+        + 4*pow(this.radians,4) 
+        + 4*this.sqrt2*this.radians*pow(this.k,3) 
+        - 4*pow(this.k,4)
+    ) / this.temp;
+    
+    this.b4 = (
+        pow(this.k,4) 
+        - 2*this.sqrt2*pow(this.radians,3) * this.k 
+        + pow(this.radians,4) 
+        - 2*this.sqrt2*this.radians*pow(this.k,3) 
+        + 4*pow(this.radians,2)*pow(this.k,2)
+    ) / this.temp;
+    
+);
+
+function linkwitz_riley_lowpass_4(freq)
+(
+    this.x1 = 0.0;
+    this.x2 = 0.0;
+    this.x3 = 0.0;
+    this.x4 = 0.0;
+    
+    this.y1 = 0.0;
+    this.y2 = 0.0;
+    this.y3 = 0.0;
+    this.y4 = 0.0;
+    
+    this.ny = srate * 0.49;
+    this._linkwitz_riley_lowpass_4_compute_coeffs(freq);
+);
+
+function linkwitz_riley_lowpass_4_set_freq(freq)
+(
+    this._linkwitz_riley_lowpass_4_compute_coeffs(freq);
+);
+
+function linkwitz_riley_lowpass_4_do(signal)
+(
+    tmp_ = this.a0*(x + this.x4) + this.a1*( this.x1 + this.x3 ) + this.a2*this.x2 - this.b1*this.y1 - this.b2*this.y2 -this.b3*this.y3 - this.b4*this.y4;
+
+    this.x4 = this.x3;
+    this.x3 = this.x2;
+    this.x2 = this.x1;
+    this.x1 = signal;
+    this.y4 = this.y3;
+    this.y3 = this.y2;
+    this.y2 = this.y1;
+    this.y1 = tmp_;
+    
+    tmp_;
+);
+
+
+
+
+/******************************************************* 
+LINKWITZ_RILEY_HIGHPASS_4
+=========================
+
+Fourth-order Linkwitz Riley highpass filter.
+
+Description
+-----------
+
+The linkwitz_riley_highpass_4 object initializes a fourth-order IIR Linkwitz Riley 
+highpass filter. It takes the cutoff frequency, in Hz, as argument.
+
+A Linkwitz–Riley (L-R) filter is an infinite impulse response filter used in
+Linkwitz–Riley audio crossovers, named after its inventors Siegfried Linkwitz and
+Russ Riley, which was originally described in Active Crossover Networks for
+Noncoincident Drivers in JAES Volume 24 Issue 1 pp. 2-8; February 1976. It is also
+known as a Butterworth squared filter. An L-R crossover consists of a parallel
+combination of a low-pass and a high-pass L-R filter. The filters are usually
+designed by cascading two Butterworth filters, each of which has −3 dB gain at the
+cut-off frequency. The resulting Linkwitz–Riley filter has a −6 dB gain at the
+cutoff frequency. This means that summing the low-pass and high-pass outputs, the
+gain at the crossover frequency will be 0 dB, so the crossover behaves like an
+all-pass filter, having a flat amplitude response with a smoothly changing phase
+response. This is the biggest advantage of L-R crossovers compared to Butterworth
+crossovers, whose summed output has a +3 dB peak around the crossover frequency.
+Since cascading two nth order Butterworth filters will give a 2nd order
+Linkwitz–Riley filter, theoretically any 2nd order Linkwitz–Riley crossover can be
+designed. However, crossovers of higher order than 4th may have less usability due
+to their increasing peak in group delay around crossover frequency and complexity.
+
+(Source: https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter)
+
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### linkwitz_riley_highpass_4(freq) ####
+
+Initializes a highpass filter with `freq` as the cutoff frequency.
+
+Methods
+-------
+
+#### linkwitz_riley_highpass_4_set_freq(freq) ####
+
+Sets a new cutoff frequency `freq`, in Hz.
+
+#### linkwitz_riley_highpass_4_do(signal) ####
+
+Processes one samples of an input signal `signal` and outputs
+the filtered sample.
+
+Example
+-------
+
+    desc:Linkwitz-Riley 4th Order Highpass Filter
+
+    import cookdsp.jsfx-inc
+
+    slider1:3500<100,10000>Cutoff Frequency In Hz
+
+    @init
+    // Initializes the filter
+    filt1.linkwitz_riley_highpass_4(slider1);
+    filt2.linkwitz_riley_highpass_4(slider1);
+
+    @slider
+    filt1.linkwitz_riley_highpass_4_set_freq(slider1);
+    filt2.linkwitz_riley_highpass_4_set_freq(slider1);
+
+    @sample
+    // Filters the input signal
+    spl0 = filt1.linkwitz_riley_highpass_4_do(spl0);
+    spl1 = filt2.linkwitz_riley_highpass_4_do(spl1);
+
+********************************************************/
+function _linkwitz_riley_highpass_4_clear()
+(
+    this.x4 = 0.0;
+    this.x3 = 0.0;
+    this.x2 = 0.0;
+    this.x1 = 0.0;
+    this.y4 = 0.0;
+    this.y3 = 0.0;
+    this.y2 = 0.0;
+    this.y1 = 0.0;
+);
+
+function _linkwitz_riley_highpass_4_compute_coeffs(freq)
+(
+    // This filter is not meant for dynamic frequency adjustments, and attenpts to do so can produce spikes
+    // In order to avoid this, the filter is cleared whenever the frequency is changed
+    this._linkwitz_riley_highpass_4_clear();
+    
+    this.freq = clip(freq, 1.0, this.ny);
+    
+    this.sqrt2 = sqrt(2.);
+    this.radians = 2*$pi*this.freq;
+    this.k =  this.radians/tan($pi*this.freq/srate); // kTTTwoPi*frequency/tan(kTTPi*frequency/sr);
+
+    this.temp = (
+        4*pow(this.radians,2)*pow(this.k,2)
+        + 2*this.sqrt2*pow(this.radians,3)*this.k+pow(this.k,4)
+        + 2*this.sqrt2*this.radians*pow(this.k,3) 
+        + pow(this.radians,4)
+    );
+    
+    this.a0 =      pow(this.k,4) / this.temp;
+    this.a1 = -4 * pow(this.k,4) / this.temp;
+    this.a2 =  6 * pow(this.k,4) / this.temp;
+    //this.a3 = this.a1;//this.a3 = -4*pow(this.k,4)/    this.temp;
+    //this.a4 = this.a0; //this.a4 = pow(this.k,4)/    this.temp;
+
+    this.b1 = (
+        4*pow(this.radians,4) 
+        + 4*this.sqrt2*pow(this.radians,3)*this.k-4*pow(this.k,4) 
+        - 4*this.sqrt2*this.radians*pow(this.k,3)
+    ) / this.temp;
+    
+    this.b2 = (
+        6*pow(this.radians,4)
+        - 8*pow(this.radians,2)*pow(this.k,2)
+        + 6*pow(this.k,4)
+    ) / this.temp;
+    
+    this.b3 = (
+        -4*this.sqrt2*pow(this.radians,3)*this.k
+        + 4*pow(this.radians,4)
+        + 4*this.sqrt2*this.radians*pow(this.k,3)
+        - 4*pow(this.k,4)
+    ) / this.temp;
+    
+    this.b4 = (
+        pow(this.k,4) 
+        - 2*this.sqrt2*pow(this.radians,3)*this.k 
+        + pow(this.radians,4)
+        - 2*this.sqrt2*this.radians*pow(this.k,3)
+        + 4*pow(this.radians,2)*pow(this.k,2)
+    ) / this.temp;
+    
+);
+
+function linkwitz_riley_highpass_4(freq)
+(
+    this.x1 = 0.0;
+    this.x2 = 0.0;
+    this.x3 = 0.0;
+    this.x4 = 0.0;
+    
+    this.y1 = 0.0;
+    this.y2 = 0.0;
+    this.y3 = 0.0;
+    this.y4 = 0.0;
+    
+    this.ny = srate * 0.49;
+    this._linkwitz_riley_highpass_4_compute_coeffs(freq);
+);
+
+function linkwitz_riley_highpass_4_set_freq(freq)
+(
+    this._linkwitz_riley_highpass_4_compute_coeffs(freq);
+);
+
+function linkwitz_riley_highpass_4_do(signal)
+(
+    tmp_ = this.a0*(signal + this.x4) + this.a1*( this.x1 + this.x3 ) + this.a2*this.x2 - this.b1*this.y1 - this.b2*this.y2 -this.b3*this.y3 - this.b4*this.y4;
+
+    this.x4 = this.x3;
+    this.x3 = this.x2;
+    this.x2 = this.x1;
+    this.x1 = signal;
+    this.y4 = this.y3;
+    this.y3 = this.y2;
+    this.y2 = this.y1;
+    this.y1 = tmp_;
+    
+    tmp_;    
 );

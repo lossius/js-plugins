@@ -1,0 +1,126 @@
+desc:4ch Filters - 3-band Linkwitz-Riley 4th Order Splitter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:800<20,18000>Crossover Frequency 1 In Hz
+slider2:3500<20,18000>Crossover Frequency 2 In Hz
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:Band 1 Ch 1
+out_pin:Band 1 Ch 2
+out_pin:Band 1 Ch 3
+out_pin:Band 1 Ch 4
+out_pin:Band 2 Ch 1
+out_pin:Band 2 Ch 2
+out_pin:Band 2 Ch 3
+out_pin:Band 2 Ch 4
+out_pin:Band 3 Ch 1
+out_pin:Band 3 Ch 2
+out_pin:Band 3 Ch 3
+out_pin:Band 3 Ch 4
+
+@init
+
+function sort_frequencies()
+(
+    // Sort crossover frequencies
+    (slider2 > slider1) ? (
+        cross_1_freq = slider1;
+        cross_2_freq = slider2;
+    ) : (
+        cross_1_freq = slider2;
+        cross_2_freq = slider1;
+    )
+);
+
+sort_frequencies();
+
+// Initializes 1st filter
+cross_1_lp_filt1.linkwitz_riley_lowpass_4(cross_1_freq);
+cross_1_lp_filt2.linkwitz_riley_lowpass_4(cross_1_freq);
+cross_1_lp_filt3.linkwitz_riley_lowpass_4(cross_1_freq);
+cross_1_lp_filt4.linkwitz_riley_lowpass_4(cross_1_freq);
+
+// Initializes 2nd filter
+cross_1_hp_filt1.linkwitz_riley_highpass_4(cross_1_freq);
+cross_1_hp_filt2.linkwitz_riley_highpass_4(cross_1_freq);
+cross_1_hp_filt3.linkwitz_riley_highpass_4(cross_1_freq);
+cross_1_hp_filt4.linkwitz_riley_highpass_4(cross_1_freq);
+
+// Initializes 3rd filter
+cross_2_lp_filt1.linkwitz_riley_lowpass_4(cross_2_freq);
+cross_2_lp_filt2.linkwitz_riley_lowpass_4(cross_2_freq);
+cross_2_lp_filt3.linkwitz_riley_lowpass_4(cross_2_freq);
+cross_2_lp_filt4.linkwitz_riley_lowpass_4(cross_2_freq);
+
+// Initializes 4th filter
+cross_2_hp_filt1.linkwitz_riley_highpass_4(cross_2_freq);
+cross_2_hp_filt2.linkwitz_riley_highpass_4(cross_2_freq);
+cross_2_hp_filt3.linkwitz_riley_highpass_4(cross_2_freq);
+cross_2_hp_filt4.linkwitz_riley_highpass_4(cross_2_freq);
+
+
+@slider
+// Sort crossover frequencies
+sort_frequencies();
+
+cross_1_lp_filt1.linkwitz_riley_lowpass_4_set_freq(cross_1_freq);
+cross_1_lp_filt2.linkwitz_riley_lowpass_4_set_freq(cross_1_freq);
+cross_1_lp_filt3.linkwitz_riley_lowpass_4_set_freq(cross_1_freq);
+cross_1_lp_filt4.linkwitz_riley_lowpass_4_set_freq(cross_1_freq);
+
+cross_1_hp_filt1.linkwitz_riley_highpass_4_set_freq(cross_1_freq);
+cross_1_hp_filt2.linkwitz_riley_highpass_4_set_freq(cross_1_freq);
+cross_1_hp_filt3.linkwitz_riley_highpass_4_set_freq(cross_1_freq);
+cross_1_hp_filt4.linkwitz_riley_highpass_4_set_freq(cross_1_freq);
+
+cross_2_lp_filt1.linkwitz_riley_lowpass_4_set_freq(cross_2_freq);
+cross_2_lp_filt2.linkwitz_riley_lowpass_4_set_freq(cross_2_freq);
+cross_2_lp_filt3.linkwitz_riley_lowpass_4_set_freq(cross_2_freq);
+cross_2_lp_filt4.linkwitz_riley_lowpass_4_set_freq(cross_2_freq);
+
+cross_2_hp_filt1.linkwitz_riley_highpass_4_set_freq(cross_2_freq);
+cross_2_hp_filt2.linkwitz_riley_highpass_4_set_freq(cross_2_freq);
+cross_2_hp_filt3.linkwitz_riley_highpass_4_set_freq(cross_2_freq);
+cross_2_hp_filt4.linkwitz_riley_highpass_4_set_freq(cross_2_freq);
+
+
+@sample
+// Filters the input signal
+in1 = spl0;
+in2 = spl1;
+in3 = spl2;
+in4 = spl3;
+
+// Prevent blow ups if track is 2 channels only as spl2 and spl3 might be un-ininitiated.
+(num_ch == 2) ? (
+  in3 = 0.;
+  in4 = 0.;
+);
+
+// Crossover 1 - highpassed signal stored temporarily
+spl0  = cross_1_lp_filt1.linkwitz_riley_lowpass_4_do(in1);
+spl1  = cross_1_lp_filt2.linkwitz_riley_lowpass_4_do(in2);
+spl2  = cross_1_lp_filt3.linkwitz_riley_lowpass_4_do(in3);
+spl3  = cross_1_lp_filt4.linkwitz_riley_lowpass_4_do(in4);
+
+tmp1  = cross_1_hp_filt1.linkwitz_riley_highpass_4_do(in1);
+tmp2  = cross_1_hp_filt2.linkwitz_riley_highpass_4_do(in2);
+tmp3  = cross_1_hp_filt3.linkwitz_riley_highpass_4_do(in3);
+tmp4  = cross_1_hp_filt4.linkwitz_riley_highpass_4_do(in4);
+
+// Crossover 2 applied to highpass signal from crossover 1
+spl4  = cross_2_lp_filt1.linkwitz_riley_lowpass_4_do(tmp1);
+spl5  = cross_2_lp_filt2.linkwitz_riley_lowpass_4_do(tmp2);
+spl6  = cross_2_lp_filt3.linkwitz_riley_lowpass_4_do(tmp3);
+spl7  = cross_2_lp_filt4.linkwitz_riley_lowpass_4_do(tmp4);
+
+spl8  = cross_2_hp_filt1.linkwitz_riley_highpass_4_do(tmp1);
+spl9  = cross_2_hp_filt2.linkwitz_riley_highpass_4_do(tmp2);
+spl10 = cross_2_hp_filt3.linkwitz_riley_highpass_4_do(tmp3);
+spl11 = cross_2_hp_filt4.linkwitz_riley_highpass_4_do(tmp4);

@@ -1,0 +1,69 @@
+desc:4ch Filters - 2-band Linkwitz-Riley 4th Order Splitter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:3500<20,18000>Crossover Frequency In Hz
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:LP-1
+out_pin:LP-2
+out_pin:LP-3
+out_pin:LP-4
+out_pin:HP-5
+out_pin:HP-6
+out_pin:HP-7
+out_pin:HP-8
+
+@init
+// Initializes the lowpass filter
+lp_filt1.linkwitz_riley_lowpass_4(slider1);
+lp_filt2.linkwitz_riley_lowpass_4(slider1);
+lp_filt3.linkwitz_riley_lowpass_4(slider1);
+lp_filt4.linkwitz_riley_lowpass_4(slider1);
+
+// Initializes the highpass filter
+hp_filt1.linkwitz_riley_highpass_4(slider1);
+hp_filt2.linkwitz_riley_highpass_4(slider1);
+hp_filt3.linkwitz_riley_highpass_4(slider1);
+hp_filt4.linkwitz_riley_highpass_4(slider1);
+
+
+@slider
+lp_filt1.linkwitz_riley_lowpass_4_set_freq(slider1);
+lp_filt2.linkwitz_riley_lowpass_4_set_freq(slider1);
+lp_filt3.linkwitz_riley_lowpass_4_set_freq(slider1);
+lp_filt4.linkwitz_riley_lowpass_4_set_freq(slider1);
+
+hp_filt1.linkwitz_riley_highpass_4_set_freq(slider1);
+hp_filt2.linkwitz_riley_highpass_4_set_freq(slider1);
+hp_filt3.linkwitz_riley_highpass_4_set_freq(slider1);
+hp_filt4.linkwitz_riley_highpass_4_set_freq(slider1);
+
+
+@sample
+// Filters the input signal
+in1 = spl0;
+in2 = spl1;
+in3 = spl2;
+in4 = spl3;
+
+// Prevent blow ups if track is 2 channels only as spl2 and spl3 might be un-ininitiated.
+(num_ch == 2) ? (
+  in3 = 0.;
+  in4 = 0.;
+);
+
+spl0 = lp_filt1.linkwitz_riley_lowpass_4_do(in1);
+spl1 = lp_filt2.linkwitz_riley_lowpass_4_do(in2);
+spl2 = lp_filt3.linkwitz_riley_lowpass_4_do(in3);
+spl3 = lp_filt4.linkwitz_riley_lowpass_4_do(in4);
+
+spl4 = hp_filt1.linkwitz_riley_highpass_4_do(in1);
+spl5 = hp_filt2.linkwitz_riley_highpass_4_do(in2);
+spl6 = hp_filt3.linkwitz_riley_highpass_4_do(in3);
+spl7 = hp_filt4.linkwitz_riley_highpass_4_do(in4);

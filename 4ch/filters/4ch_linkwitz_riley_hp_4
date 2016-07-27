@@ -1,0 +1,26 @@
+desc:4ch Filters - Linkwitz-Riley 4th Order Highpass Filter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:3500<20,18000>Cutoff Frequency In Hz
+
+@init
+// Initializes the filter
+filt1.linkwitz_riley_highpass_4(slider1);
+filt2.linkwitz_riley_highpass_4(slider1);
+filt3.linkwitz_riley_highpass_4(slider1);
+filt4.linkwitz_riley_highpass_4(slider1);
+
+@slider
+filt1.linkwitz_riley_highpass_4_set_freq(slider1);
+filt2.linkwitz_riley_highpass_4_set_freq(slider1);
+filt3.linkwitz_riley_highpass_4_set_freq(slider1);
+filt4.linkwitz_riley_highpass_4_set_freq(slider1);
+
+@sample
+// Filters the input signal
+spl0 = filt1.linkwitz_riley_highpass_4_do(spl0);
+spl1 = filt2.linkwitz_riley_highpass_4_do(spl1);
+spl2 = filt3.linkwitz_riley_highpass_4_do(spl2);
+spl3 = filt4.linkwitz_riley_highpass_4_do(spl3);

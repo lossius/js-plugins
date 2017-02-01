@@ -109,34 +109,128 @@ Example
 ********************************************************/
 function _buthp1_compute_coeffs(freq)
 (
-    this.freq = clip(freq, 1.0, this.ny);
-    c_ = 2*$pi*this.freq;
-    c2_ = c_/tan($pi*this.freq/srate);
-      this.a0 = c2_/(c2_+c_); 
-      this.a1 = -this.a0;
-      this.b1 = (c_-c2_)/(c2_+c_);
+    this.freq = clip (freq, 1.0, this.ny);
+    c_ = 2 * $pi * this.freq;
+    c2_ = c_ / tan ($pi * this.freq / srate);
+    this.a0 = c2_ / (c2_ + c_); 
+    this.a1 = - this.a0;
+    this.b1 = (c_ - c2_) / (c2_ + c_);
 );
 
 function buthp1(freq)
 (
     this.x1 = this.y1 = 0.0;
     this.ny = srate * 0.49;
-    this._buthp1_compute_coeffs(freq);
+    this._buthp1_compute_coeffs (freq);
 );
 
 function buthp1_set_freq(freq)
 (
-    this._buthp1_compute_coeffs(freq);
+    this._buthp1_compute_coeffs (freq);
 );
 
 function buthp1_do(signal)
 (
     // This is a more efficient version...
-    tmp_ = this.a0*(signal - this.x1) - this.b1*this.y1;
+    tmp_ = this.a0 * (signal - this.x1) - this.b1 * this.y1;
     // ...of this:
     // tmp_ = this.a0 * signal + this.a1 * this.x1 - this.b1 * this.y1;
-    this.x1 = signal; this.y1 = tmp_;
+    this.x1 = signal;
+    this.y1 = tmp_;
     tmp_;
+);
+
+
+
+/******************************************************* 
+BUTLP1
+======
+
+First-order Butterworth lowpass filter.
+
+Description
+-----------
+
+The butlp1 object initializes a first-order IIR Butterworth 
+lowpass filter. It takes the cutoff frequency, in Hz, as argument.
+
+The Butterworth filter is a type of signal processing filter designed 
+to have as flat a frequency response as possible in the passband.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### butlp1(freq) ####
+
+Initializes a lowpass filter with `freq` as the cutoff frequency.
+
+Methods
+-------
+
+#### butlp1_set_freq(freq) ####
+
+Sets a new cutoff frequency `freq`, in Hz.
+
+#### butlp1_do(signal) ####
+
+Processes one samples of an input signal `signal` and outputs
+the filtered sample.
+
+Example
+-------
+
+    desc:Butterworth 1st Order Lowpass Filter
+
+    import cookdsp.jsfx-inc
+
+    slider1:3500<100,10000>Cutoff Frequency In Hz
+
+    @init
+    // Initializes the filter
+    filt1.butlp1(slider1);
+    filt2.butlp1(slider1);
+
+    @slider
+    filt1.butlp1_set_freq(slider1);
+    filt2.butlp1_set_freq(slider1);
+
+    @sample
+    // Filters the input signal
+    spl0 = filt1.butlp1_do(spl0);
+    spl1 = filt2.butlp1_do(spl1);
+
+********************************************************/
+function _butlp1_compute_coeffs(freq)
+(
+    this.freq = clip (freq, 1.0, this.ny);
+    c_  = 2 * $pi * this.freq;
+    c2_ = c_ / tan ($pi * this.freq / srate);
+    this.a0 = c_ / (c2_ + c_); 
+    this.a1 = this.a0; 
+    this.b1 = (c_ - c2_) / (c2_ + c_);
+);
+
+function butlp1(freq)
+(
+    this.x1 = this.y1 = 0.0;
+    this.ny = srate * 0.49;
+    this._butlp1_compute_coeffs (freq);
+);
+
+function butlp1_set_freq(freq)
+(
+    this._butlp1_compute_coeffs (freq);
+);
+
+function butlp1_do(signal)
+(
+    // This is a more efficient version...
+    tmp_ = this.a0 * signal + this.a1 * this.x1 - this.b1 * this.y1;
+    this.x1 = signal;
+    this.y1 = tmp_;
+    tmp_; // returned value
 );
 
 

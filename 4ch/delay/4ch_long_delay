@@ -66,8 +66,9 @@ d1.delay_write(spl1 + val1 * slider2);
 d2.delay_write(spl2 + val2 * slider2);
 d3.delay_write(spl3 + val3 * slider2);
 
-// sum and output
-spl0 = (spl0 + val0) * 0.5;
-spl1 = (spl1 + val1) * 0.5;
-spl2 = (spl2 + val2) * 0.5;
-spl3 = (spl3 + val3) * 0.5;
+// output delay only, direct signal is not mixed in
+// use wet/dry mix if you want dry signal to pass through
+spl0 = val0;
+spl1 = val1;
+spl2 = val2;
+spl3 = val3;

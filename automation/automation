@@ -72,8 +72,8 @@ function ease(x) local(f)
                       (x < 0.5) ? (
                         8 * x * x * x * x;
                       ) : (
-                    		f = (x - 1);
-                    		return -8 * f * f * f * f + 1;
+                        f = (x - 1);
+                        return -8 * f * f * f * f + 1;
                       );
                     ) : (
                       
@@ -139,7 +139,7 @@ function ease(x) local(f)
                                                   -0.5 * pow(2, (-20 * x) + 10) + 1;
                                                 );
                                               );
-	                                          ) : (
+                                            ) : (
                                                 
                                               (easeFunction == 22) ? ( // ElasticEaseIn
                                                 sin(13 * $pi * 0.5 * x) * pow(2, 10 * (x - 1));
@@ -171,8 +171,8 @@ function ease(x) local(f)
                                                             f = 2 * x;
                                                             0.5 * (f * f * f - f * sin(f * $pi));
                                                           ) : (
-                                                          	f = (1 - (2*x - 1));
-                                                          	0.5 * (1 - (f * f * f - f * sin(f * $pi))) + 0.5;
+                                                            f = (1 - (2*x - 1));
+                                                            0.5 * (1 - (f * f * f - f * sin(f * $pi))) + 0.5;
                                                           );
                                                         );
                                                       );

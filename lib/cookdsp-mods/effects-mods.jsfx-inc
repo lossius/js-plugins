@@ -1,0 +1,128 @@
+@init
+
+/******************************************************* 
+SATURATION
+======
+
+Arc tangent saturarion.
+
+
+Description
+-----------
+
+The saturarion object applies an sinus saturarion with controllable 
+drive to the input signal.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### saturarion(drive, cutoff, preamp) ####
+
+Initialises a saturarion object. `drive` is the amount of saturarion 
+applied to the signal, between 0 and 1 and `cutoff` is the cutoff
+frequency (Hz) of a second order lowpass filter applied post process.  
+
+Methods
+-------
+
+#### saturarion_set_preamp(preamp) ####
+
+Sets how much the signal will be amplified (in dB) prior to the saturarion.
+
+#### saturarion_set_drive(drive) ####
+
+Sets a new drive, between 0 and 1, to the saturarion.
+
+#### saturarion_set_cutoff(cutoff) ####
+
+Sets a new cutoff, in Hz, to the post lowpass filter.
+
+#### saturarion_do(signal) ####
+
+Processes one samples of an input signal `signal` and outputs
+the saturarionrted sample.
+
+Example
+-------
+
+    desc:Simple Saturation
+
+    import cookdsp.jsfx-inc
+
+    slider1:0.1<0,1>Drive
+    slider2:0.0<-24,24,0.1>Preamp (dB)
+
+    @init
+    disL.saturation(slider1, slider2);
+    disR.saturation(slider1, slider2);
+
+    @slider
+    disL.saturation_set_drive(slider1);
+    disR.saturation_set_drive(slider1);
+    disL.saturation_set_preamp(slider2);
+    disR.saturation_set_preamp(slider2);
+
+    @sample
+    spl0 = disL.saturation_do(spl0);
+    spl1 = disR.saturation_do(spl1);
+
+********************************************************/
+function saturation(drive, preamp)
+(
+    this.drive = drive;
+    this.f = scale (this.drive, 0., 1., 0.001, 0.999, 1.);
+    this.f = clip(this.f, 0.001, 0.999);
+	this.z = $pi * this.f;
+	this.s = 1.0 / sin(this.z);
+	this.b = 1.0 / this.f;
+    this.b = clip(this.b, 0., 1.);
+	(f > 0.5) ? (
+        this.scale = sin(this.z);
+    ) : (
+        this.scale = 1.0;
+    );
+    
+    this.preamp  = preamp;
+    this.pregain = dbtoa(preamp);
+);
+
+function saturation_set_preamp(preamp)
+(
+    this.preamp  = preamp;
+    this.pregain = dbtoa(preamp);
+);
+
+function saturation_set_drive(drive)
+(    
+    this.drive = drive;
+    this.f = scale (this.drive, 0., 1., 0.001, 0.999, 1.);
+    this.f = clip(this.f, 0.001, 0.999);
+	this.z = $pi * this.f;
+	this.s = 1.0 / sin(this.z);
+	this.b = 1.0 / this.f;
+    this.b = clip(this.b, 0., 1.);
+	(f > 0.5) ? (
+        this.scale = sin(this.z);
+    ) : (
+        this.scale = 1.0;
+    );
+);
+
+function saturation_do(signal)
+(
+	// TODO: dcBlockerUnit.process(in, out);
+
+	tmp_ = signal * this.pregain;
+	(tmp_ > this.b) ? (
+	    tmp_ = 1.0;
+	) : (
+        (tmp_ < -this.b) ? (
+            tmp_ = -1.0;
+        ) : (
+            tmp_ = sin(this.z * tmp_) * this.s;
+        );
+    );
+    tmp_ * this.scale;
+);

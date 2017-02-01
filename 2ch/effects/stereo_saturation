@@ -1,0 +1,21 @@
+desc:Simple Saturation (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import cookdsp-mods.jsfx-inc
+
+slider1:0.1<0,1>Drive
+slider2:0.0<-24,24,0.1>Preamp (dB)
+
+@init
+disL.saturation(slider1, slider2);
+disR.saturation(slider1, slider2);
+
+@slider
+disL.saturation_set_drive(slider1);
+disR.saturation_set_drive(slider1);
+disL.saturation_set_preamp(slider2);
+disR.saturation_set_preamp(slider2);
+
+@sample
+spl0 = disL.saturation_do(spl0);
+spl1 = disR.saturation_do(spl1);

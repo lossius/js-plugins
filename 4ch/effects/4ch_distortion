@@ -3,7 +3,7 @@ desc:4ch FX - Distortion Simple (cookdsp) (Lossius)
 import cookdsp.jsfx-inc
 
 slider1:0.7<0,1>Drive
-slider2:5000<500,10000>Lowpass Cutoff
+slider2:5000<500,18000>Lowpass Cutoff
 
 in_pin:1
 in_pin:2

@@ -62,12 +62,20 @@ Example
     spl0 *= amp; spl1 *= amp;
 
 ********************************************************/
-function q2bandwidth(q) local(bw)
+function q2bandwidth(q) local(q1 q2 q3 q4)
 (
-  bw = max(q, 0.001);
-  bw = (1 + sqrt(1 + 4.0*bw*bw)) / (2.*bw);
-  bw = 2. * log(bw) / log(2.);
-  bw;
+    /*
+    bw = max(q, 0.001);
+    bw = (1 + sqrt(1 + 4.0*bw*bw)) / (2.*bw);
+    bw = 2. * log(bw) / log(2.);
+    bw;
+    */
+    
+    q1 = ((2 * q * q) + 1) / (2 * q * q);
+    q2 = pow(2 * q1, 2) / 4;
+    q3 = sqrt(q2 - 1);
+    q4 = q1 + q3;
+    log(q4)/log(2);
 );
 
 
@@ -134,8 +142,14 @@ Example
 ********************************************************/
 function bandwidth2q(bw) local(q)
 (
-  q = max(bw, 0.001);
-  q = pow(2., q*0.5);
-  q = 1. / (q - (1. / q));
-  q;
+    // Old method turend out not to be correct
+    // Correct formula found in javascrip of this page: http://www.sengpielaudio.com/calculator-bandwidth.htm
+    /*
+    q = max(bw, 0.001);
+    q = pow(2., q*0.5);
+    q = 1. / (q - (1. / q));
+    q;
+    */
+
+    pow(2, bw * 0.5) / (pow(2., bw) - 1);
 );

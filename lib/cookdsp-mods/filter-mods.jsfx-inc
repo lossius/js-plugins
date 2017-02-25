@@ -45,6 +45,33 @@ function eq_query_magnitude(freq) local(w)
 );
 
 
+function butbp_query_magnitude(freq) local(w)
+(
+    this.a1 = 0.;
+    this.b0 = 1.;  
+    w = (2*freq*$pi)/srate;
+    
+    // Calculate and return gain in dB
+    -10*log10(
+        (
+            this.b0*this.b0 + this.b1*this.b1 + this.b2*this.b2 +
+            2*(this.b0*this.b1 + this.b1*this.b2)*cos(w) + 
+            2*(this.b0*this.b2)*cos(2*w)
+        ) / (
+            this.a0*this.a0 + this.a1*this.a1 + this.a2*this.a2 +
+            2*(this.a0*this.a1 + this.a1*this.a2)*cos(w) + 
+            2*(this.a0*this.a2)*cos(2*w)
+        )
+    );
+);
+
+
+function butbp_set_q_unclipped(q)
+(
+    //q < 0.5 ? q = 0.5 : q > 1000 ? q = 1000;
+    this.q = q; 
+    this._butbp_compute_coeffs();
+);
 
 
 /******************************************************* 

@@ -10,23 +10,33 @@ slider7:50<0,100,1>Wet (%)
 //slider1:0<0,1,1{Yes,No}>Freeze
 
 import cookdsp.jsfx-inc
+import cookdsp-mods.jsfx-inc
 
 
 
 @init
 // 2 sec delay is sufficient for all 16th note delay times down to bpm = 30
-xfade = slider3 * 0.001 * srate;
 d0.delay(2*srate);
 d1.delay(2*srate);
+
+filt0.butbp(slider4, bandwidth2q(slider5));
+filt1.butbp(slider4, bandwidth2q(slider5));
 
 
 
 @slider
-// delay time is calculated in block rather than slider section
+// delay time params
 noteDelay = 1 + slider2;
 (slider2 == 6) ? (noteDelay = 8);
 (slider2 == 7) ? (noteDelay = 16);
 
+// filter params
+filt0.butbp_set_freq(slider4);
+filt1.butbp_set_freq(slider4);
+filt0.butbp_set_q(bandwidth2q(slider5));
+filt1.butbp_set_q(bandwidth2q(slider5));
+
+// signal flow params
 feedback = slider6 * 0.01;
 mixWet = slider7 * 0.01;
 mixDry = 1.0 - mixWet;
@@ -52,10 +62,9 @@ val0 = d0.delay_fread3(samps);
 val1 = d1.delay_fread3(samps);
 
 // write values in ping pong delay lines
-d1.delay_write(spl0 + val0 * feedback);
-d0.delay_write(spl1 + val1 * feedback);
+d1.delay_write(filt0.butbp_do(spl0 + val0 * feedback));
+d0.delay_write(filt1.butbp_do(spl1 + val1 * feedback));
 
 // mix and output
 spl0 = spl0 * mixDry + val0 * mixWet;
 spl1 = spl1 * mixDry + val1 * mixWet;
-

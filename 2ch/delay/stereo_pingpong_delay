@@ -1,0 +1,61 @@
+desc:Stereo PingPong Delay - (cookdsp)
+
+slider1:0<0,1,1{Synced to beat, Not synced to beat}>Delay mode
+slider2:2<0,7,1{1, 2, 3, 4, 5, 6, 8, 16}>Delay time in 16th notes (when synced)
+slider3:1<1,1000,0.1>Delay Time in ms (when not synced)
+slider4:50<20,18000,1>Bandpass Freq (Hz)
+slider5:4<0.5,9.0,0.1>Bandpass Width (Octaves)
+slider6:60<0,95,1>Feedback (%)
+slider7:50<0,100,1>Wet (%)
+//slider1:0<0,1,1{Yes,No}>Freeze
+
+import cookdsp.jsfx-inc
+
+
+
+@init
+// 2 sec delay is sufficient for all 16th note delay times down to bpm = 30
+xfade = slider3 * 0.001 * srate;
+d0.delay(2*srate);
+d1.delay(2*srate);
+
+
+
+@slider
+// delay time is calculated in block rather than slider section
+noteDelay = 1 + slider2;
+(slider2 == 6) ? (noteDelay = 8);
+(slider2 == 7) ? (noteDelay = 16);
+
+feedback = slider6 * 0.01;
+mixWet = slider7 * 0.01;
+mixDry = 1.0 - mixWet;
+
+
+@block
+blockTempo = tempo;
+
+// Delay time in samples, depends on sync mode
+(slider1 == 0) ?
+(
+    samps = (60 * srate * noteDelay) / (tempo * 4)
+)
+:
+(
+    samps = slider3 * srate * 0.001;
+);
+
+
+@sample
+// read with cubic interpolation
+val0 = d0.delay_fread3(samps);
+val1 = d1.delay_fread3(samps);
+
+// write values in ping pong delay lines
+d1.delay_write(spl0 + val0 * feedback);
+d0.delay_write(spl1 + val1 * feedback);
+
+// mix and output
+spl0 = spl0 * mixDry + val0 * mixWet;
+spl1 = spl1 * mixDry + val1 * mixWet;
+

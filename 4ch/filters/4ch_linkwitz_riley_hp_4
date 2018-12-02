@@ -5,6 +5,17 @@ import lossius-cookdsp-mods.jsfx-inc
 
 slider1:3500<20,18000>Cutoff Frequency In Hz
 
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+
+out_pin:LP-1
+out_pin:LP-2
+out_pin:LP-3
+out_pin:LP-4
+
+
 @init
 // Initializes the filter
 filt1.linkwitz_riley_highpass_4(slider1);

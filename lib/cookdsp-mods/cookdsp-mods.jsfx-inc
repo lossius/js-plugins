@@ -3,6 +3,7 @@ import 4ch-granulator.jsfx-inc
 import effects-mods.jsfx-inc
 import filter-mods.jsfx-inc
 import graphics.jsfx-inc
+import granulator-mods.jsfx-inc
 import scaling-mods.jsfx-inc
 
 @init

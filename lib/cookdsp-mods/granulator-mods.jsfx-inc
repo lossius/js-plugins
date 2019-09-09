@@ -1,0 +1,395 @@
+/*
+This file is a modification by Trond Lossius of code from cookdsp.
+*/
+
+/////////////////////////////////////////////////////////////////
+// cookdsp is copyright (c) - 2015 - Olivier Belanger          //
+// Permission to use, copy, modify, and/or distribute this     //
+// software for any purpose with or without fee is hereby      //
+// granted, provided that the above copyright notice and this  //
+// permission notice appear in all copies. CookDSP IS PROVIDED //
+// "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.      //
+/////////////////////////////////////////////////////////////////
+
+import filter-mods.jsfx-inc
+
+@init
+
+
+/******************************************************* 
+GRAINDELAY
+==========
+
+Simple single channel granular delay with feedback
+
+Description
+-----------
+
+The `graindelay` object is a granular delay with transposition
+and feedback. It implements a single channel granular synthesis
+on incoming audio buffered continuously onto a cycling buffer.
+There will be `num` grains with their starting point equally spaced 
+in time over the duration specified with the `dur` parameter. It uses
+an internal tuckey window function as the grain envelope.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, buflen) ####
+
+The `graindelay` function initializes a synchronous granular delay.
+It provides control over the number of overlapped grains
+(`num`), the duration, in seconds, of the grains (`dur`), the delay time,
+in seconds, (delay), the maximun additionl random delay time, the overall
+transposition (`pitch`) and feedback in percents (feedback). The arguments
+`delayrnd` and `pitrnd` control the amount of random applied to the delay
+and pitch of each grain (regardless of the values of the other grains).
+
+The `buf` argument is the length of the internal memory, in seconds, 
+allocated at  initialization time. This space will be used as a cyclic buffer
+for incoming samples to be granulated.
+
+Methods
+-------
+
+#### graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback) ####
+
+Sets all parameters at once. See other methods for more details.
+
+#### graindelay_set_num(num) ####
+
+Sets a new number of overlapped grains `num`. The maximum number of
+grains is 128.
+
+#### graindelay_set_dur(dur) ####
+
+Sets a new grain duration `dur`, in seconds.
+
+#### graindelay_set_delay(delay) ####
+
+Sets the delay time, in seconds.
+
+#### graindelay_set_delayrnd(posrnd) ####
+
+Sets a new delay random factor, in secods.
+
+#### graindelay_set_pitch(pitch) ####
+
+Sets a new transposition factor `pitch` (1 means no transposition).
+
+#### graindelay_set_pitrnd(pitrnd) ####
+
+Sets a new pitch random factor, between 0 (no transposition) and 1
+(full range random transposition).
+
+#### graindelay_set_feedback(feedback) ####
+
+Sets a new feedback value, in percents. Depending on other settings
+high feedback values might return signal to become unstable and blow up.
+
+#### graindelay_get_status() ####
+
+Depending on grain duration, delay and pitch it might be that grains
+start to close to current buffer recording buffer position, and progress
+to fast, so that they overshoot the recording position before the
+end of the grain. If so, additional delay is introduced to prevent this
+from happening. Thus function returns 1 if corrections for overshoot
+are being made, and 0 if no corrections are needed.
+
+#### graindelay_do(signal) ####
+
+Processes one 4-channel samples of an input signal `signal` 
+and outputs the processed sample.
+
+Example
+-------
+
+    desc:Grain Delay
+    
+    slider1:8<1,64,1>Number Of Grains
+    slider2:100<1,500,1>Grain Duration (ms)
+    slider3:125<0,1500,1>Delay (ms)
+    slider4:0<0,500,1>Delay Randomisation (ms)
+    slider5:0<-36.,12.,0.01>Transposition (MIDI)
+    slider6:0.1<0,1>Random Transposition
+    slider7:0<0,95>Feedback (%)
+    slider8:0<0,1,1{Forward,reverse}>Grain Direction (not yet implemented)
+    slider9:0<0,1,1{No correction needed,Correcting delay time to prevent overshooting}>Correction Status
+    
+    in_pin:1
+    in_pin:2
+    in_pin:3
+    in_pin:4
+    
+    out_pin:1
+    out_pin:2
+    out_pin:3
+    out_pin:4
+    
+    import cookdsp.jsfx-inc
+    import 4ch-granulator.jsfx-inc
+    
+    @init
+    
+    // Initializes granulator with an internal memory of 4 seconds.
+    // 4 seconds is more than enough with the parameter ranges set for this plugin
+    // To calculate needed buffer size: Max delay + Max Delay Random + Max Grain Duration * Max Speed
+    kBufLen = 4;
+    buf = graindelay.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen)
+    
+    
+    @slider
+    num = slider1;
+    dur = slider2*0.001;
+    delay = slider3 * 0.001;
+    delayrnd = slider4 * 0.001;
+    pitch = pow(2,(slider5/12.));
+    pitrnd = slider6;
+    feedback = slider7;
+    
+    // Sets all parameters at once.
+    graindelay.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback)
+    
+    
+    @block
+    slider9 = graindelay.graindelay_get_status();
+    sliderchange(slider9);
+    
+    @sample
+    tmp_ = graindelay.graindelay_do(spl0, spl1, spl2, spl3); 
+    spl0 = tmp_[0];
+    spl1 = tmp_[1];
+    spl2 = tmp_[2];
+    spl3 = tmp_[3];
+    
+********************************************************/
+
+// Private functions
+function _graindelay_init_memories()
+(
+    this.startpos = memalloc(128);
+    this.gsize = memalloc(128);
+    this.gphase = memalloc(128);
+    this.lastpos = memalloc(128);
+);
+
+function _graindelay_reset_memories()
+(
+    memset(this.startpos, 0, 128);
+    memset(this.gsize, 0, 128);
+    memset(this.gphase, 0, 128);
+    memset(this.lastpos, 0, 128);
+);
+
+function _graindelay_compute_phase_inc()
+(
+    this.dur == 0 ? durtosamps_ = 0 : durtosamps_ = (1 / this.dur) / srate;
+    this.inc = this.pitch * durtosamps_;
+);
+
+
+function _graindelay_set_overshoot_status()
+(
+    debug_dur = this.dur;
+    debug_pitch = this.pitch;
+    debug_pitchrnd_max = (1 + this.pitrnd);
+    debug_delay = this.delay;
+    debug_status = ( this.dur * (1 + this.pitrnd) * this.pitch - this.dur - this.delay );
+    
+    this.overshoot_status = ( ( this.dur * (1 + this.pitrnd) * this.pitch - this.dur - this.delay ) > 0 );
+);
+
+
+function graindelay_get_status()
+(
+    this.overshoot_status;
+);
+
+
+// grains setter functions
+function graindelay_set_num(num)
+(
+    num != this.num ? (
+        num > 128 ? num = 128;
+        this.num = num;
+        num <= 24 ? (
+            this.gain = pow(10, -num/2 * 0.05);
+        ) : (
+            this.gain = pow(10, -12 * 0.05);
+        );
+        this._graindelay_reset_memories();
+        nc_ = 0;
+        loop(num,
+            //ph_ = (nc_/num) * (1.0 + (rand(2)-1) * 0.01); // TODO: Why the last part of this? It just seems to offset the phase of some of the grains by 1%.
+            ph_ = nc_/num; // TODO: Testing
+            ph_ < 0 ? ph_ = 0 : ph_ >= 1 ? ph_ -= 1;
+            this.gphase[nc_] = ph_;
+            this.lastpos[nc_] = 1;
+            nc_ += 1;
+        );
+    );
+);
+
+function graindelay_set_dur(dur)
+(
+    dur != this.dur ? (
+        this.dur = dur;
+        this._graindelay_compute_phase_inc();
+        this._graindelay_set_overshoot_status();
+    );
+);
+
+function graindelay_set_delay(delay)
+(
+    delay < 0 ? delay = 0 : delay > this.buflen ? delay = this.buflen;
+    this.delay = delay;
+    this._graindelay_set_overshoot_status();
+);
+
+function graindelay_set_delayrnd(delayrnd)
+(
+    delayrnd < 0 ? delayrnd = 0;
+    // NB - Max delayrnd need to be sanitized by the plugibn that instantiates this class
+    this.delayrnd = delayrnd;
+    this._graindelay_set_overshoot_status();
+);
+
+function graindelay_set_pitch(pitch)
+(
+    pitch != this.pitch ? (
+        this.pitch = pitch;
+        this._graindelay_compute_phase_inc();
+        
+        lpfreq_ = ( srate * 0.95 * 0.5 );
+        this.pitch > 1 ? ( lpfreq_ = lpfreq_ / this.pitch );
+        
+        filt_lp.butlp_set_freq( lpfreq_ );
+        
+        this._graindelay_set_overshoot_status();
+    );
+);
+
+function graindelay_set_pitrnd(pitrnd)
+(
+    pitrnd < 0 ? pitrnd = 0 : pitrnd > 1 ? pitrnd = 1;
+    this.pitrnd = pow(pitrnd, 3) * 0.5;
+    this._graindelay_set_overshoot_status();
+);
+
+function graindelay_set_feedback(feedback)
+(
+    feedback = feedback * 0.01;
+    feedback < 0 ? feedback = 0 : feedback > 0.95 ? feedback = 0.95;
+    this.feedback = feedback;
+);
+
+function graindelay_set(num dur delay delayrnd pitch pitrnd feedback)
+(
+    this.graindelay_set_num(num);
+    this.graindelay_set_dur(dur);
+    this.graindelay_set_delay(delay);
+    this.graindelay_set_delayrnd(delayrnd);
+    this.graindelay_set_pitch(pitch); 
+    this.graindelay_set_pitrnd(pitrnd);
+    this.graindelay_set_feedback(feedback);
+);
+
+// Initializer
+function graindelay(num dur delay delayrnd pitch pitrnd feedback buflen)
+(
+    // Set up buffers - buflen is seconds
+    this.buflen = srate*buflen;
+    bufloc_ = this.buf.buffer(this.buflen);
+    
+    // Set up window function
+    this.env.buffer(1024); this.env.buffer_window(6);
+    
+    // Set delay parameters
+    this.graindelay_set_dur(dur);           // Grain duration
+    this.graindelay_set_delay(delay);       // Delay in seconds
+    this.graindelay_set_delayrnd(delayrnd); // Delay randomisation (spray) in seconds
+    this.graindelay_set_pitch(pitch);       // Transposition (as MIDI interval)
+    this.graindelay_set_pitrnd(pitrnd);     // Transposition randomisation (as MIDI interval)
+    this.graindelay_set_feedback(feedback); // Feedback in percents (%)
+
+    // Set memory for individual grain parameters and set number of grains
+    this._graindelay_init_memories();
+    this.graindelay_set_num(num);
+    
+    // Set initial recording and playback positions
+    this.phase = this.reclen = this.sum = this.recpos = 0;
+    
+    // DC filter
+    this.filt_dc.buthp(20);
+    
+    // Low Pass filters near Nyquist
+    this.filt_lp.butlp(srate * 0.45);
+    
+    bufloc_; // return buffer location into the global memory
+);
+
+// DSP processing
+function graindelay_do(signal0)
+(
+    // Granulate recorded signal
+    tmp_ = 0;
+    
+    // Iterate over grains
+    nc_ = 0;
+    loop(this.num,
+        ppos_ = this.phase + this.gphase[nc_];
+        ppos_ >= 1 ? ppos_ -= 1;
+        amp_ = this.env.buffer_fnread2(ppos_);
+        ppos_ < this.lastpos[nc_] ? (
+            
+            // Trigger new grain
+            len_ = this.buflen;
+            this.gsize[nc_] = this.dur * srate;
+            
+            // Introduce pitch variation between grains by making singular grains cover more or less samples
+            this.gsize[nc_] *= 1 + (rand(2)-1) * this.pitrnd;
+            graindelay_ = ( this.delay + rand(1) * this.delayrnd ) * srate;
+            this.startpos[nc_] = this.recpos - graindelay_;
+            
+            // Prevent grain from running ahead of the buffering (overshooting)
+            overshoot_ = this.gsize[nc_] * this.pitch - this.dur * srate - graindelay_;
+            overshoot_ > 0 ? this.startpos[nc_] -= overshoot_ - 1;            
+            this.startpos[nc_] < 0 ? (
+                this.startpos[nc_] += len_;
+            ) : this.startpos[nc_] >=  len_ ? (
+                this.startpos[nc_] -=  len_;
+            );
+            
+        );
+        this.lastpos[nc_] = ppos_;
+        index_ = ppos_ * this.gsize[nc_] + this.startpos[nc_];
+        index_ >= len_ ? index_ -= len_;
+        tmp_ += this.buf.buffer_fread2(index_) * amp_;
+        nc_ += 1;
+    );
+    
+    tmp_ *= this.gain;
+    
+    // DC filtering
+    tmp_ = this.filt_dc.buthp_do(tmp_);
+    
+    
+    // Filt4ering near Nyquist
+    tmp_ = this.filt_lp.butlp_do(tmp_);
+    
+    this.phase += this.inc;
+    this.phase < 0 ? this.phase += 1 : this.phase >= 1 ? this.phase -= 1;
+        
+    // Record input signal and feedback onto cyclic buffer
+    // End point interpolation is handled by buffer_write()
+    // Feedback has phase reversed for additional richness(?)
+    this.buf.buffer_write(this.recpos, signal0 + this.feedback * tmp_);
+    
+    this.recpos += 1;
+    this.recpos >= this.buflen ? this.recpos = 0;
+
+    // Returns a sample
+    this.sigout = tmp_;
+);

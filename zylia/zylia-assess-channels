@@ -16,7 +16,7 @@ Redistribution and use in source and binary forms, with or without modification,
 
 desc: Zylia - Quality Assess Channels (cookdsp) (Lossius)
 
-slider1:0<0,10,0{Bypass, Solo 1-2, Solo 3-4, Solo 5-6, Solo 7-8, Solo 9-10, Solo 11-12, Solo 13-14, Solo 15-16, Solo 17-18, Solo 19-20}>Assess Channels
+slider1:0<0,10,0{Bypass, Solo 1-2, Solo 3-4, Solo 5-6, Solo 7-8, Solo 9-10, Solo 11-12, Solo 13-14, Solo 15-16, Solo 17-18, Solo 19}>Assess Channels
 
 in_pin:1
 in_pin:2
@@ -72,8 +72,8 @@ mode = slider1;
 @sample
 mode > 0 ? (
     test = 10;
-    sig0 = spl( 2 * mode );
-    sig1 = spl( 2 * mode + 1 );
+    sig0 = spl( 2 * ( mode - 1 ) );
+    sig1 = spl( 2 * ( mode - 1 ) + 1 );
     gain = 0;
 ) : (
     test = 20;
@@ -89,3 +89,4 @@ loop(20,
 
 spl0 += sig0;
 spl1 += sig1;
+spl19 = 0;          // Mute channel 20 as Zylia only has 19 channels

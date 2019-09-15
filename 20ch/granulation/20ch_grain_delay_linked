@@ -1,0 +1,144 @@
+*
+ This plug is based on example code from cookdsp.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+desc:20ch Grain Delay - Linked Channels (cookdsp) (Lossius)
+
+slider1:8<1,64,1>Number Of Grains
+slider2:100<1,500,1>Grain Duration (ms)
+slider3:125<0,1500,1>Delay (ms)
+slider4:0<0,500,1>Delay Randomisation (ms)
+slider5:0<-36.,12.,0.01>Transposition (MIDI)
+slider6:0.1<0,1>Random Transposition
+slider7:0<0,95>Feedback (%)
+slider8:0<0,1,1{Forward,reverse}>Grain Direction (not yet implemented)
+slider9:0<0,1,1{No correction needed,Correcting delay time to prevent overshooting}>Correction Status
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+in_pin:5
+in_pin:6
+in_pin:7
+in_pin:8
+in_pin:9
+in_pin:10
+
+in_pin:11
+in_pin:12
+in_pin:13
+in_pin:14
+in_pin:15
+in_pin:16
+in_pin:17
+in_pin:18
+in_pin:19
+in_pin:20
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+out_pin:5
+out_pin:6
+out_pin:7
+out_pin:8
+out_pin:9
+out_pin:10
+
+out_pin:11
+out_pin:12
+out_pin:13
+out_pin:14
+out_pin:15
+out_pin:16
+out_pin:17
+out_pin:18
+out_pin:19
+out_pin:20
+
+import cookdsp.jsfx-inc
+import 20ch-granulator.jsfx-inc
+
+@init
+
+// Initializes granulator with an internal memory of 4 seconds.
+// 4 seconds is more than enough with the parameter ranges set for this plugin
+// To calculate needed buffer size: Max delay + Max Delay Random + Max Grain Duration * Max Speed
+kBufLen = 4;
+buf = graindelay.ch20_graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+
+signalIn = memalloc(20);
+
+
+@slider
+num = slider1;
+dur = slider2*0.001;
+delay = slider3 * 0.001;
+delayrnd = slider4 * 0.001;
+pitch = pow(2,(slider5/12.));
+pitrnd = slider6;
+feedback = slider7;
+
+// Sets all parameters at once.
+graindelay.ch20_graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback)
+
+
+@block
+slider9 = graindelay.ch20_graindelay_get_status();
+sliderchange(slider9);
+
+@sample
+signalIn[0] = spl0;
+signalIn[1] = spl1;
+signalIn[2] = spl2;
+signalIn[3] = spl3;
+signalIn[4] = spl4;
+signalIn[5] = spl5;
+signalIn[6] = spl6;
+signalIn[7] = spl7;
+signalIn[8] = spl8;
+signalIn[9] = spl9;
+
+signalIn[10] = spl10;
+signalIn[11] = spl11;
+signalIn[12] = spl12;
+signalIn[13] = spl13;
+signalIn[14] = spl14;
+signalIn[15] = spl15;
+signalIn[16] = spl16;
+signalIn[17] = spl17;
+signalIn[18] = spl18;
+signalIn[19] = spl19;
+
+tmp_ = graindelay.ch20_graindelay_do(signalIn); 
+
+spl0 = tmp_[0];
+spl1 = tmp_[1];
+spl2 = tmp_[2];
+spl3 = tmp_[3];
+spl4 = tmp_[4];
+spl5 = tmp_[5];
+spl6 = tmp_[6];
+spl7 = tmp_[7];
+spl8 = tmp_[8];
+spl9 = tmp_[9];
+
+spl10 = tmp_[10];
+spl11 = tmp_[11];
+spl12 = tmp_[12];
+spl13 = tmp_[13];
+spl14 = tmp_[14];
+spl15 = tmp_[15];
+spl16 = tmp_[16];
+spl17 = tmp_[17];
+spl18 = tmp_[18];
+spl19 = tmp_[19];

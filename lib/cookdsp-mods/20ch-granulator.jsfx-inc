@@ -1,0 +1,1073 @@
+/*
+This plugin is a modification by Trond Lossius of code from cookdsp.
+*/
+
+/////////////////////////////////////////////////////////////////
+// cookdsp is copyright (c) - 2015 - Olivier Belanger          //
+// Permission to use, copy, modify, and/or distribute this     //
+// software for any purpose with or without fee is hereby      //
+// granted, provided that the above copyright notice and this  //
+// permission notice appear in all copies. CookDSP IS PROVIDED //
+// "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.      //
+/////////////////////////////////////////////////////////////////
+
+@init
+
+/******************************************************* 
+20CH_GRAINS
+==========
+
+Simple first order ambisonics granular synthesis generator.
+
+Description
+-----------
+
+The `ch20_grains` object implements a 4 channel synchronous granular synthesis.
+There will be `num` grains with their starting point equally spaced 
+in time over the duration specified with the `dur` parameter. It uses
+an internal tuckey window function as the grain envelope. Four channels
+of audio are buffered, and the granulator produce 20-channel grains.
+This makes it well suited for granulation of first order ambisonic
+A-format and B-format signals.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### ch20_grains(num, pitch, pos, dur, pitrnd, posrnd, maxlen) ####
+
+The `ch20_grains` function initializes a synchronous granular synthesis
+generator. It provides control over the number of overlapped grains
+(`num`), the overall transposition (`pitch`), the position of the
+playback pointer (`pos`), normalized between 0 and 1 and the duration,
+in seconds, of the grains (`dur`). The arguments `pitrnd` and `posrnd`
+control the amount of random applied to the pitch and the playback 
+position of each grain (regardless of the values of the other grains).
+These arguments are normalized between 0 and 1. The `maxlen` argument
+is the length of the internal memory, in seconds, allocated at 
+initialization time. This space will be used to record the samples
+to be granulated.
+
+Methods
+-------
+
+#### ch20_grains_record(state) ####
+
+If `state` is 1, the object starts recording the samples given as
+argument to `ch20_grains_do` method into the internal memory space. A
+`state` of 0 stops the recording and switch back to the playing mode.
+If the recording reach the end of the internal memory, the recording
+is stopped automatically.
+
+#### ch20_grains_set(num, pitch, pos, dur, pitrnd, posrnd) ####
+
+Sets all parameters at once. See other methods for more details.
+
+#### ch20_grains_set_num(num) ####
+
+Sets a new number of overlapped grains `num`. The maximum number of
+grains is 128.
+
+#### ch20_grains_set_pitch(pitch) ####
+
+Sets a new transposition factor `pitch` (1 means no transposition).
+
+#### ch20_grains_set_pos(pos) ####
+
+Sets a new playback position `pos`, normalized between 0 (beginning) 
+and 1 (end), into the recording chunk.
+
+#### ch20_grains_set_dur(dur) ####
+
+Sets a new grain duration `dur`, in seconds.
+
+#### ch20_grains_set_pitrnd(pitrnd) ####
+
+Sets a new pitch random factor, between 0 (no transposition) and 1
+(full range random transposition).
+
+#### ch20_grains_set_posrnd(posrnd) ####
+
+Sets a new position random factor, between 0 (no deviation) and 1
+(full range random deviation).
+
+#### ch20_grains_do(signal) ####
+
+Processes one 4-channel samples of an input signal `signal` 
+and outputs the processed sample.
+
+Example
+-------
+
+    desc:Surround 4ch Simple Granulator
+
+    slider1:24<1,64,1>Number Of Grains
+    slider2:0<-24.,24.,0.01>Transposition
+    slider3:0.5<0,1>Reading Position
+    slider4:0.1<0.01,0.5>Grain Duration
+    slider5:0.1<0,1>Random Transposition
+    slider6:0.1<0,1>Random Position
+    slider7:0<0,1,1{Playing,Recording}>Play/Record Mode
+
+    in_pin:1
+    in_pin:2
+    in_pin:3
+    in_pin:4
+    
+    out_pin:1
+    out_pin:2
+    out_pin:3
+    out_pin:4
+
+    import cookdsp.jsfx-inc
+
+    @init
+    // Initializes 2 granulators with an internal memory of 10 seconds.
+    bufL = grL.ch20_grains(slider1, slider2, slider3, slider4, slider5, slider6, 10);
+    bufR = grR.ch20_grains(slider1, slider2, slider3, slider4, slider5, slider6, 10);
+
+    @slider
+    speed = pow(2,(slider2/12.));
+    // Sets all parameters at once.
+    grL.ch20_grains_set(slider1, speed, slider3, slider4, slider5, slider6);
+    grR.ch20_grains_set(slider1, speed, slider3, slider4, slider5, slider6);
+    // We need to record some samples in memory to be able to granulate them.
+    grL.ch20_grains_record(slider7);
+    grR.ch20_grains_record(slider7);
+
+    @sample
+    // Only output signal when in playing state.
+    play_state == 1 ? (
+        tmp_ = grL.ch20_grains_do(spl0, spl1, spl2, spl3); 
+        spl0 = tmp_[0];
+        spl1 = tmp_[1];
+        spl2 = tmp_[2];
+        spl3 = tmp_[3];
+    );
+
+********************************************************/
+
+// Private functions
+function _ch20_grains_init_memories()
+(
+    this.startpos = memalloc(128);
+    this.gsize = memalloc(128);
+    this.gphase = memalloc(128);
+    this.lastpos = memalloc(128);
+);
+
+function _ch20_grains_reset_memories()
+(
+    memset(this.startpos, 0, 128);
+    memset(this.gsize, 0, 128);
+    memset(this.gphase, 0, 128);
+    memset(this.lastpos, 0, 128);
+);
+
+function _ch20_grains_compute_phase_inc()
+(
+    this.dur == 0 ? durtosamps_ = 0 : durtosamps_ = (1 / this.dur) / srate;
+    this.inc = this.pitch * durtosamps_;
+);
+
+// grains setter functions
+function ch20_grains_set_num(num)
+(
+    num != this.num ? (
+        num > 128 ? num = 128;
+        this.num = num;
+        num <= 24 ? (
+            this.gain = pow(10, -num/2 * 0.05);
+        ) : (
+            this.gain = pow(10, -12 * 0.05);
+        );
+        this._ch20_grains_reset_memories();
+        nc_ = 0;
+        loop(num,
+            ph_ = (nc_/num) * (1.0 + (rand(2)-1) * 0.01);
+            ph_ < 0 ? ph_ = 0 : ph_ >= 1 ? ph_ -= 1;
+            this.gphase[nc_] = ph_;
+            this.lastpos[nc_] = 1;
+            nc_ += 1;
+        );
+    );
+);
+
+function ch20_grains_set_pitch(pitch)
+(
+    pitch != this.pitch ? (
+        this.pitch = pitch;
+        this._ch20_grains_compute_phase_inc();
+    );
+);
+
+function ch20_grains_set_pos(pos)
+(
+    pos < 0 ? pos = 0 : pos > 1 ? pos = 1;
+    this.pos = pos;
+);
+
+function ch20_grains_set_dur(dur)
+(
+    dur != this.dur ? (
+        this.dur = dur;
+        this._ch20_grains_compute_phase_inc();
+    );
+);
+
+function ch20_grains_set_pitrnd(pitrnd)
+(
+    pitrnd < 0 ? pitrnd = 0 : pitrnd > 1 ? pitrnd = 1;
+    this.pitrnd = pow(pitrnd, 3) * 0.5;
+);
+
+function ch20_grains_set_posrnd(posrnd)
+(
+    posrnd < 0 ? posrnd = 0 : posrnd > 1 ? posrnd = 1;
+    this.posrnd = pow(posrnd, 3) * 0.5;
+);
+
+function ch20_grains_set(num pitch pos dur pitrnd posrnd)
+(
+    this.ch20_grains_set_num(num);   
+    this.ch20_grains_set_pitch(pitch); 
+    this.ch20_grains_set_pos(pos);   
+    this.ch20_grains_set_dur(dur);   
+    this.ch20_grains_set_pitrnd(pitrnd);
+    this.ch20_grains_set_posrnd(posrnd);
+);
+
+// grains initializer
+function ch20_grains(num pitch pos dur pitrnd posrnd maxlen)
+(
+    this.maxlen = maxlen;
+    
+    bufloc_ = memalloc(20);
+    
+    bufloc_[0] = this.buf00.buffer(srate*maxlen);
+    bufloc_[1] = this.buf01.buffer(srate*maxlen);
+    bufloc_[2] = this.buf02.buffer(srate*maxlen);
+    bufloc_[3] = this.buf03.buffer(srate*maxlen);
+    bufloc_[4] = this.buf04.buffer(srate*maxlen);
+    bufloc_[5] = this.buf05.buffer(srate*maxlen);
+    bufloc_[6] = this.buf06.buffer(srate*maxlen);
+    bufloc_[7] = this.buf07.buffer(srate*maxlen);
+    bufloc_[8] = this.buf08.buffer(srate*maxlen);
+    bufloc_[9] = this.buf09.buffer(srate*maxlen);
+    
+    bufloc_[10] = this.buf10.buffer(srate*maxlen);
+    bufloc_[11] = this.buf11.buffer(srate*maxlen);
+    bufloc_[12] = this.buf12.buffer(srate*maxlen);
+    bufloc_[13] = this.buf13.buffer(srate*maxlen);
+    bufloc_[14] = this.buf14.buffer(srate*maxlen);
+    bufloc_[15] = this.buf15.buffer(srate*maxlen);
+    bufloc_[16] = this.buf16.buffer(srate*maxlen);
+    bufloc_[17] = this.buf17.buffer(srate*maxlen);
+    bufloc_[18] = this.buf18.buffer(srate*maxlen);
+    bufloc_[19] = this.buf19.buffer(srate*maxlen);
+
+    
+    this.sigout = memalloc(20);
+    this.env.buffer(1024); this.env.buffer_window(6);
+    this.ch20_grains_set_pitch(pitch);
+    this.ch20_grains_set_pos(pos);
+    this.ch20_grains_set_dur(dur);
+    this.ch20_grains_set_pitrnd(pitrnd);
+    this.ch20_grains_set_posrnd(posrnd);
+    this._ch20_grains_init_memories();
+    this.ch20_grains_set_num(num);
+    this.phase = this.recpos = this.reclen = this.sum = this.record = 0;
+    bufloc_; // return buffer location into the global memory
+);
+
+// grains start/stop record function
+function ch20_grains_record(state)
+(
+    state == 1 && this.record == 0 ? (
+        this.record = 1;
+    ) : state == 0 && this.record == 1 ? (
+        this.record = this.recpos = 0;
+    );
+);
+
+function ch20_grains_do(signal)
+(
+    this.record == 1 ? ( // record input signal
+        
+        tmp00_ = signal[0];
+        tmp01_ = signal[1];
+        tmp02_ = signal[2];
+        tmp03_ = signal[3];
+        tmp04_ = signal[4];
+        tmp05_ = signal[5];
+        tmp06_ = signal[6];
+        tmp07_ = signal[7];
+        tmp08_ = signal[8];
+        tmp09_ = signal[9];
+        
+        tmp10_ = signal[10];
+        tmp11_ = signal[11];
+        tmp12_ = signal[12];
+        tmp13_ = signal[13];
+        tmp14_ = signal[14];
+        tmp15_ = signal[15];
+        tmp16_ = signal[16];
+        tmp17_ = signal[17];
+        tmp18_ = signal[18];
+        tmp19_ = signal[19];
+
+        this.buf00.buffer_write( this.recpos, signal[0] );
+        this.buf01.buffer_write( this.recpos, signal[1] );
+        this.buf02.buffer_write( this.recpos, signal[2] );
+        this.buf03.buffer_write( this.recpos, signal[3] );
+        this.buf04.buffer_write( this.recpos, signal[4] );
+        this.buf05.buffer_write( this.recpos, signal[5] );
+        this.buf06.buffer_write( this.recpos, signal[6] );
+        this.buf07.buffer_write( this.recpos, signal[7] );
+        this.buf08.buffer_write( this.recpos, signal[8] );
+        this.buf09.buffer_write( this.recpos, signal[9] );
+        
+        this.buf10.buffer_write( this.recpos, signal[10] );
+        this.buf11.buffer_write( this.recpos, signal[11] );
+        this.buf12.buffer_write( this.recpos, signal[12] );
+        this.buf13.buffer_write( this.recpos, signal[13] );
+        this.buf14.buffer_write( this.recpos, signal[14] );
+        this.buf15.buffer_write( this.recpos, signal[15] );
+        this.buf16.buffer_write( this.recpos, signal[16] );
+        this.buf17.buffer_write( this.recpos, signal[17] );
+        this.buf18.buffer_write( this.recpos, signal[18] );
+        this.buf19.buffer_write( this.recpos, signal[19] );
+        
+        this.recpos += 1;
+        this.reclen = this.recpos;
+        this.recpos == (srate*this.maxlen) ? this.ch20_grains_record(0);
+    ) : ( // granulate recorded signal
+    
+        tmp00_ = 0;
+        tmp01_ = 0;
+        tmp02_ = 0;
+        tmp03_ = 0;
+        tmp04_ = 0;
+        tmp05_ = 0;
+        tmp06_ = 0;
+        tmp07_ = 0;
+        tmp08_ = 0;
+        tmp09_ = 0;
+        
+        tmp10_ = 0;
+        tmp11_ = 0;
+        tmp12_ = 0;
+        tmp13_ = 0;
+        tmp14_ = 0;
+        tmp15_ = 0;
+        tmp16_ = 0;
+        tmp17_ = 0;
+        tmp18_ = 0;
+        tmp19_ = 0;
+
+        nc_ = 0;
+        loop(this.num,
+            ppos_ = this.phase + this.gphase[nc_];
+            ppos_ >= 1 ? ppos_ -= 1;
+            amp_ = this.env.buffer_fnread2(ppos_);
+            ppos_ < this.lastpos[nc_] ? (
+                len_ = this.reclen - this.gsize[nc_];
+                this.gsize[nc_] = this.dur * srate;
+                this.gsize[nc_] *= 1 + (rand(2)-1) * this.pitrnd;
+                this.startpos[nc_] = this.pos * len_;
+                this.startpos[nc_] += (rand(2)-1) * this.posrnd * this.reclen;
+                this.startpos[nc_] < 0 ? (
+                    this.startpos[nc_] += len_;
+                ) : this.startpos[nc_] >=  len_ ? (
+                    this.startpos[nc_] -=  len_;
+                );
+            );
+            this.lastpos[nc_] = ppos_;
+            index_ = ppos_ * this.gsize[nc_] + this.startpos[nc_];
+            index_ >= 0 && index_ < this.reclen ? (
+                
+                tmp00_ += this.buf00.buffer_fread2(index_) * amp_;
+                tmp01_ += this.buf01.buffer_fread2(index_) * amp_;
+                tmp02_ += this.buf02.buffer_fread2(index_) * amp_;
+                tmp03_ += this.buf03.buffer_fread2(index_) * amp_;
+                tmp04_ += this.buf04.buffer_fread2(index_) * amp_;
+                tmp05_ += this.buf05.buffer_fread2(index_) * amp_;
+                tmp06_ += this.buf06.buffer_fread2(index_) * amp_;
+                tmp07_ += this.buf07.buffer_fread2(index_) * amp_;
+                tmp08_ += this.buf08.buffer_fread2(index_) * amp_;
+                tmp09_ += this.buf09.buffer_fread2(index_) * amp_;
+                
+                tmp10_ += this.buf10.buffer_fread2(index_) * amp_;
+                tmp11_ += this.buf11.buffer_fread2(index_) * amp_;
+                tmp12_ += this.buf12.buffer_fread2(index_) * amp_;
+                tmp13_ += this.buf13.buffer_fread2(index_) * amp_;
+                tmp14_ += this.buf14.buffer_fread2(index_) * amp_;
+                tmp15_ += this.buf15.buffer_fread2(index_) * amp_;
+                tmp16_ += this.buf16.buffer_fread2(index_) * amp_;
+                tmp17_ += this.buf17.buffer_fread2(index_) * amp_;
+                tmp18_ += this.buf18.buffer_fread2(index_) * amp_;
+                tmp19_ += this.buf19.buffer_fread2(index_) * amp_;
+
+            );
+            nc_ += 1;
+        );
+        tmp00_ *= this.gain;
+        tmp01_ *= this.gain;
+        tmp02_ *= this.gain;
+        tmp03_ *= this.gain;
+        tmp04_ *= this.gain;
+        tmp05_ *= this.gain;
+        tmp06_ *= this.gain;
+        tmp07_ *= this.gain;
+        tmp08_ *= this.gain;
+        tmp09_ *= this.gain;
+        
+        tmp10_ *= this.gain;
+        tmp11_ *= this.gain;
+        tmp12_ *= this.gain;
+        tmp13_ *= this.gain;
+        tmp14_ *= this.gain;
+        tmp15_ *= this.gain;
+        tmp16_ *= this.gain;
+        tmp17_ *= this.gain;
+        tmp18_ *= this.gain;
+        tmp19_ *= this.gain;
+
+        this.phase += this.inc;
+        this.phase < 0 ? this.phase += 1 : this.phase >= 1 ? this.phase -= 1;
+    );
+    // Returns a vector of 20 samples
+    this.sigout[0]  = tmp00_;
+    this.sigout[1]  = tmp01_;
+    this.sigout[2]  = tmp02_;
+    this.sigout[3]  = tmp03_;
+    this.sigout[4]  = tmp04_;
+    this.sigout[5]  = tmp05_;
+    this.sigout[6]  = tmp06_;
+    this.sigout[7]  = tmp07_;
+    this.sigout[8]  = tmp08_;
+    this.sigout[9]  = tmp09_;
+    
+    this.sigout[10] = tmp10_;
+    this.sigout[11] = tmp11_;
+    this.sigout[12] = tmp12_;
+    this.sigout[13] = tmp13_;
+    this.sigout[14] = tmp14_;
+    this.sigout[15] = tmp15_;
+    this.sigout[16] = tmp16_;
+    this.sigout[17] = tmp17_;
+    this.sigout[18] = tmp18_;
+    this.sigout[19] = tmp19_;
+    
+    this.sigout;
+);
+
+
+/******************************************************* 
+20CH_GRAINDELAY
+==============
+
+Simple first order ambisonics granular delay with feedback
+
+Description
+-----------
+
+The `ch20_graindelay` object is a granular delay with transposition
+and feedback. It implements a 4 channel synchronous granular synthesis
+on incoming audio buffered continuously onto a cycling buffer.
+There will be `num` grains with their starting point equally spaced 
+in time over the duration specified with the `dur` parameter. It uses
+an internal tuckey window function as the grain envelope. Four channels
+of audio are buffered, and the granulator produce 20-channel grains.
+This makes it well suited for granulation of first order ambisonic
+A-format and B-format signals.
+
+It must be used with a variable name as prefix (object oriented).
+
+Initializer
+-----------
+
+#### ch20_graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, buflen) ####
+
+The `ch20_graindelay` function initializes a synchronous granular delay.
+It provides control over the number of overlapped grains
+(`num`), the duration, in seconds, of the grains (`dur`), the delay time,
+in seconds, (delay), the maximun additionl random delay time, the overall
+transposition (`pitch`) and feedback in percents (feedback). The arguments
+`delayrnd` and `pitrnd` control the amount of random applied to the delay
+and pitch of each grain (regardless of the values of the other grains).
+
+The `buf` argument is the length of the internal memory, in seconds, 
+allocated at  initialization time. This space will be used as a cyclic buffer
+for incoming samples to be granulated.
+
+Methods
+-------
+
+#### ch20_graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback) ####
+
+Sets all parameters at once. See other methods for more details.
+
+#### ch20_graindelay_set_num(num) ####
+
+Sets a new number of overlapped grains `num`. The maximum number of
+grains is 128.
+
+#### ch20_graindelay_set_dur(dur) ####
+
+Sets a new grain duration `dur`, in seconds.
+
+#### ch20_graindelay_set_delay(delay) ####
+
+Sets the delay time, in seconds.
+
+#### ch20_graindelay_set_delayrnd(posrnd) ####
+
+Sets a new delay random factor, in secods.
+
+#### ch20_graindelay_set_pitch(pitch) ####
+
+Sets a new transposition factor `pitch` (1 means no transposition).
+
+#### ch20_graindelay_set_pitrnd(pitrnd) ####
+
+Sets a new pitch random factor, between 0 (no transposition) and 1
+(full range random transposition).
+
+#### ch20_graindelay_set_feedback(feedback) ####
+
+Sets a new feedback value, in percents. Depending on other settings
+high feedback values might return signal to become unstable and blow up.
+
+#### ch20_graindelay_get_status() ####
+
+Depending on grain duration, delay and pitch it might be that grains
+start to close to current buffer recording buffer position, and progress
+to fast, so that they overshoot the recording position before the
+end of the grain. If so, additional delay is introduced to prevent this
+from happening. Thus function returns 1 if corrections for overshoot
+are being made, and 0 if no corrections are needed.
+
+#### ch20_graindelay_do(signal) ####
+
+Processes one 4-channel samples of an input signal `signal` 
+and outputs the processed sample.
+
+Example
+-------
+
+    desc:4ch Grain Delay - Linked Chanels
+    
+    slider1:8<1,64,1>Number Of Grains
+    slider2:100<1,500,1>Grain Duration (ms)
+    slider3:125<0,1500,1>Delay (ms)
+    slider4:0<0,500,1>Delay Randomisation (ms)
+    slider5:0<-36.,12.,0.01>Transposition (MIDI)
+    slider6:0.1<0,1>Random Transposition
+    slider7:0<0,95>Feedback (%)
+    slider8:0<0,1,1{Forward,reverse}>Grain Direction (not yet implemented)
+    slider9:0<0,1,1{No correction needed,Correcting delay time to prevent overshooting}>Correction Status
+    
+    in_pin:1
+    in_pin:2
+    in_pin:3
+    in_pin:4
+    
+    out_pin:1
+    out_pin:2
+    out_pin:3
+    out_pin:4
+    
+    import cookdsp.jsfx-inc
+    import 4ch-granulator.jsfx-inc
+    
+    @init
+    
+    // Initializes granulator with an internal memory of 4 seconds.
+    // 4 seconds is more than enough with the parameter ranges set for this plugin
+    // To calculate needed buffer size: Max delay + Max Delay Random + Max Grain Duration * Max Speed
+    kBufLen = 4;
+    buf = graindelay.ch20_graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen)
+    
+    
+    @slider
+    num = slider1;
+    dur = slider2*0.001;
+    delay = slider3 * 0.001;
+    delayrnd = slider4 * 0.001;
+    pitch = pow(2,(slider5/12.));
+    pitrnd = slider6;
+    feedback = slider7;
+    
+    // Sets all parameters at once.
+    graindelay.ch20_graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback)
+    
+    
+    @block
+    slider9 = graindelay.ch20_graindelay_get_status();
+    sliderchange(slider9);
+    
+    @sample
+    tmp_ = graindelay.ch20_graindelay_do(spl0, spl1, spl2, spl3); 
+    spl0 = tmp_[0];
+    spl1 = tmp_[1];
+    spl2 = tmp_[2];
+    spl3 = tmp_[3];
+    
+********************************************************/
+
+// Private functions
+function _ch20_graindelay_init_memories()
+(
+    this.startpos = memalloc(128);
+    this.gsize = memalloc(128);
+    this.gphase = memalloc(128);
+    this.lastpos = memalloc(128);
+);
+
+function _ch20_graindelay_reset_memories()
+(
+    memset(this.startpos, 0, 128);
+    memset(this.gsize, 0, 128);
+    memset(this.gphase, 0, 128);
+    memset(this.lastpos, 0, 128);
+);
+
+function _ch20_graindelay_compute_phase_inc()
+(
+    this.dur == 0 ? durtosamps_ = 0 : durtosamps_ = (1 / this.dur) / srate;
+    this.inc = this.pitch * durtosamps_;
+);
+
+
+function _ch20_graindelay_set_overshoot_status()
+(
+    debug_dur = this.dur;
+    debug_pitch = this.pitch;
+    debug_pitchrnd_max = (1 + this.pitrnd);
+    debug_delay = this.delay;
+    debug_status = ( this.dur * (1 + this.pitrnd) * this.pitch - this.dur - this.delay );
+    
+    this.overshoot_status = ( ( this.dur * (1 + this.pitrnd) * this.pitch - this.dur - this.delay ) > 0 );
+);
+
+
+function ch20_graindelay_get_status()
+(
+    this.overshoot_status;
+);
+
+
+// grains setter functions
+function ch20_graindelay_set_num(num)
+(
+    num != this.num ? (
+        num > 128 ? num = 128;
+        this.num = num;
+        num <= 24 ? (
+            this.gain = pow(10, -num/2 * 0.05);
+        ) : (
+            this.gain = pow(10, -12 * 0.05);
+        );
+        this._ch20_graindelay_reset_memories();
+        nc_ = 0;
+        loop(num,
+            ph_ = nc_/num; // TODO: Testing
+            ph_ < 0 ? ph_ = 0 : ph_ >= 1 ? ph_ -= 1;
+            this.gphase[nc_] = ph_;
+            this.lastpos[nc_] = 1;
+            nc_ += 1;
+        );
+    );
+);
+
+function ch20_graindelay_set_dur(dur)
+(
+    dur != this.dur ? (
+        this.dur = dur;
+        this._ch20_graindelay_compute_phase_inc();
+        this._ch20_graindelay_set_overshoot_status();
+    );
+);
+
+function ch20_graindelay_set_delay(delay)
+(
+    delay < 0 ? delay = 0 : delay > this.buflen ? delay = this.buflen;
+    this.delay = delay;
+    this._ch20_graindelay_set_overshoot_status();
+);
+
+function ch20_graindelay_set_delayrnd(delayrnd)
+(
+    delayrnd < 0 ? delayrnd = 0;
+    // NB - Max delayrnd need to be sanitized by the plugibn that instantiates this class
+    this.delayrnd = delayrnd;
+    this._ch20_graindelay_set_overshoot_status();
+);
+
+function ch20_graindelay_set_pitch(pitch)
+(
+    pitch != this.pitch ? (
+        this.pitch = pitch;
+        this._ch20_graindelay_compute_phase_inc();
+        
+        lpfreq_ = ( srate * 0.95 * 0.5 );
+        this.pitch > 1 ? ( lpfreq_ = lpfreq_ / this.pitch );
+        
+        filt_lp00.butlp_set_freq( lpfreq_ );
+        filt_lp01.butlp_set_freq( lpfreq_ );
+        filt_lp02.butlp_set_freq( lpfreq_ );
+        filt_lp03.butlp_set_freq( lpfreq_ );
+        filt_lp04.butlp_set_freq( lpfreq_ );
+        filt_lp05.butlp_set_freq( lpfreq_ );
+        filt_lp06.butlp_set_freq( lpfreq_ );
+        filt_lp07.butlp_set_freq( lpfreq_ );
+        filt_lp08.butlp_set_freq( lpfreq_ );
+        filt_lp09.butlp_set_freq( lpfreq_ );
+        
+        filt_lp10.butlp_set_freq( lpfreq_ );
+        filt_lp11.butlp_set_freq( lpfreq_ );
+        filt_lp12.butlp_set_freq( lpfreq_ );
+        filt_lp13.butlp_set_freq( lpfreq_ );
+        filt_lp14.butlp_set_freq( lpfreq_ );
+        filt_lp15.butlp_set_freq( lpfreq_ );
+        filt_lp16.butlp_set_freq( lpfreq_ );
+        filt_lp17.butlp_set_freq( lpfreq_ );
+        filt_lp18.butlp_set_freq( lpfreq_ );
+        filt_lp19.butlp_set_freq( lpfreq_ );
+        
+        this._ch20_graindelay_set_overshoot_status();
+    );
+);
+
+function ch20_graindelay_set_pitrnd(pitrnd)
+(
+    pitrnd < 0 ? pitrnd = 0 : pitrnd > 1 ? pitrnd = 1;
+    this.pitrnd = pow(pitrnd, 3) * 0.5;
+    this._ch20_graindelay_set_overshoot_status();
+);
+
+function ch20_graindelay_set_feedback(feedback)
+(
+    feedback = feedback * 0.01;
+    feedback < 0 ? feedback = 0 : feedback > 0.95 ? feedback = 0.95;
+    this.feedback = feedback;
+);
+
+function ch20_graindelay_set(num dur delay delayrnd pitch pitrnd feedback)
+(
+    this.ch20_graindelay_set_num(num);
+    this.ch20_graindelay_set_dur(dur);
+    this.ch20_graindelay_set_delay(delay);
+    this.ch20_graindelay_set_delayrnd(delayrnd);
+    this.ch20_graindelay_set_pitch(pitch); 
+    this.ch20_graindelay_set_pitrnd(pitrnd);
+    this.ch20_graindelay_set_feedback(feedback);
+);
+
+// Initializer
+function ch20_graindelay(num dur delay delayrnd pitch pitrnd feedback buflen)
+(
+    // Set up buffers - buflen is seconds
+    this.buflen = srate*buflen;
+    bufloc_ = memalloc(20);
+    
+    bufloc_[0] = this.buf00.buffer(this.buflen);
+    bufloc_[1] = this.buf01.buffer(this.buflen);
+    bufloc_[2] = this.buf02.buffer(this.buflen);
+    bufloc_[3] = this.buf03.buffer(this.buflen);
+    bufloc_[4] = this.buf04.buffer(this.buflen);
+    bufloc_[5] = this.buf05.buffer(this.buflen);
+    bufloc_[6] = this.buf06.buffer(this.buflen);
+    bufloc_[7] = this.buf07.buffer(this.buflen);
+    bufloc_[8] = this.buf08.buffer(this.buflen);
+    bufloc_[9] = this.buf09.buffer(this.buflen);
+    
+    bufloc_[10] = this.buf10.buffer(this.buflen);
+    bufloc_[11] = this.buf11.buffer(this.buflen);
+    bufloc_[12] = this.buf12.buffer(this.buflen);
+    bufloc_[13] = this.buf13.buffer(this.buflen);
+    bufloc_[14] = this.buf14.buffer(this.buflen);
+    bufloc_[15] = this.buf15.buffer(this.buflen);
+    bufloc_[16] = this.buf16.buffer(this.buflen);
+    bufloc_[17] = this.buf17.buffer(this.buflen);
+    bufloc_[18] = this.buf18.buffer(this.buflen);
+    bufloc_[19] = this.buf19.buffer(this.buflen);
+    
+    // Set up output signals
+    this.sigout = memalloc(20);
+    
+    // Set up window function
+    this.env.buffer(1024); this.env.buffer_window(6);
+    
+    // Set delay parameters
+    this.ch20_graindelay_set_dur(dur);           // Grain duration
+    this.ch20_graindelay_set_delay(delay);       // Delay in seconds
+    this.ch20_graindelay_set_delayrnd(delayrnd); // Delay randomisation (spray) in seconds
+    this.ch20_graindelay_set_pitch(pitch);       // Transposition (as MIDI interval)
+    this.ch20_graindelay_set_pitrnd(pitrnd);     // Transposition randomisation (as MIDI interval)
+    this.ch20_graindelay_set_feedback(feedback); // Feedback in percents (%)
+
+    // Set memory for individual grain parameters and set number of grains
+    this._ch20_graindelay_init_memories();
+    this.ch20_graindelay_set_num(num);
+    
+    // Set initial recording and playback positions
+    this.phase = this.reclen = this.sum = this.recpos = 0;
+    
+    // DC filters
+    filt_dc00.buthp(20);
+    filt_dc01.buthp(20);
+    filt_dc02.buthp(20);
+    filt_dc03.buthp(20);
+    filt_dc04.buthp(20);
+    filt_dc05.buthp(20);
+    filt_dc06.buthp(20);
+    filt_dc07.buthp(20);
+    filt_dc08.buthp(20);
+    filt_dc09.buthp(20);
+    
+    filt_dc10.buthp(20);
+    filt_dc11.buthp(20);
+    filt_dc12.buthp(20);
+    filt_dc13.buthp(20);
+    filt_dc14.buthp(20);
+    filt_dc15.buthp(20);
+    filt_dc16.buthp(20);
+    filt_dc17.buthp(20);
+    filt_dc18.buthp(20);
+    filt_dc19.buthp(20);
+
+    // Low Pass filters near Nyquist
+    filt_lp00.butlp(srate * 0.45);
+    filt_lp01.butlp(srate * 0.45);
+    filt_lp02.butlp(srate * 0.45);
+    filt_lp03.butlp(srate * 0.45);
+    filt_lp04.butlp(srate * 0.45);
+    filt_lp05.butlp(srate * 0.45);
+    filt_lp06.butlp(srate * 0.45);
+    filt_lp07.butlp(srate * 0.45);
+    filt_lp08.butlp(srate * 0.45);
+    filt_lp09.butlp(srate * 0.45);
+    
+    filt_lp10.butlp(srate * 0.45);
+    filt_lp11.butlp(srate * 0.45);
+    filt_lp12.butlp(srate * 0.45);
+    filt_lp13.butlp(srate * 0.45);
+    filt_lp14.butlp(srate * 0.45);
+    filt_lp15.butlp(srate * 0.45);
+    filt_lp16.butlp(srate * 0.45);
+    filt_lp17.butlp(srate * 0.45);
+    filt_lp18.butlp(srate * 0.45);
+    filt_lp19.butlp(srate * 0.45);
+    
+    bufloc_; // return buffer location into the global memory
+);
+
+// DSP processing
+function ch20_graindelay_do(signal)
+(
+    // Granulate recorded signal
+    tmp00_ = 0;
+    tmp01_ = 0;
+    tmp02_ = 0;
+    tmp03_ = 0;
+    tmp04_ = 0;
+    tmp05_ = 0;
+    tmp06_ = 0;
+    tmp07_ = 0;
+    tmp08_ = 0;
+    tmp09_ = 0;
+    
+    tmp10_ = 0;
+    tmp11_ = 0;
+    tmp12_ = 0;
+    tmp13_ = 0;
+    tmp14_ = 0;
+    tmp15_ = 0;
+    tmp16_ = 0;
+    tmp17_ = 0;
+    tmp18_ = 0;
+    tmp19_ = 0;
+    
+    // Iterate over grains
+    nc_ = 0;
+    loop(this.num,
+        ppos_ = this.phase + this.gphase[nc_];
+        ppos_ >= 1 ? ppos_ -= 1;
+        amp_ = this.env.buffer_fnread2(ppos_);
+        ppos_ < this.lastpos[nc_] ? (
+            
+            // Trigger new grain
+            len_ = this.buflen;
+            this.gsize[nc_] = this.dur * srate;
+            
+            // Introduce pitch variation between grains by making singular grains cover more or less samples
+            this.gsize[nc_] *= 1 + (rand(2)-1) * this.pitrnd;
+            graindelay_ = ( this.delay + rand(1) * this.delayrnd ) * srate;
+            this.startpos[nc_] = this.recpos - graindelay_;
+            
+            // Prevent grain from running ahead of the buffering (overshooting)
+            overshoot_ = this.gsize[nc_] * this.pitch - this.dur * srate - graindelay_;
+            overshoot_ > 0 ? this.startpos[nc_] -= overshoot_ - 1;            
+            this.startpos[nc_] < 0 ? (
+                this.startpos[nc_] += len_;
+            ) : this.startpos[nc_] >=  len_ ? (
+                this.startpos[nc_] -=  len_;
+            );
+            
+        );
+        this.lastpos[nc_] = ppos_;
+        index_ = ppos_ * this.gsize[nc_] + this.startpos[nc_];
+        index_ >= len_ ? index_ -= len_;
+        
+        tmp00_ += this.buf00.buffer_fread2(index_) * amp_;
+        tmp01_ += this.buf01.buffer_fread2(index_) * amp_;
+        tmp02_ += this.buf02.buffer_fread2(index_) * amp_;
+        tmp03_ += this.buf03.buffer_fread2(index_) * amp_;
+        tmp04_ += this.buf04.buffer_fread2(index_) * amp_;
+        tmp05_ += this.buf05.buffer_fread2(index_) * amp_;
+        tmp06_ += this.buf06.buffer_fread2(index_) * amp_;
+        tmp07_ += this.buf07.buffer_fread2(index_) * amp_;
+        tmp08_ += this.buf08.buffer_fread2(index_) * amp_;
+        tmp09_ += this.buf09.buffer_fread2(index_) * amp_;
+        
+        tmp10_ += this.buf10.buffer_fread2(index_) * amp_;
+        tmp11_ += this.buf11.buffer_fread2(index_) * amp_;
+        tmp12_ += this.buf12.buffer_fread2(index_) * amp_;
+        tmp13_ += this.buf13.buffer_fread2(index_) * amp_;
+        tmp14_ += this.buf14.buffer_fread2(index_) * amp_;
+        tmp15_ += this.buf15.buffer_fread2(index_) * amp_;
+        tmp16_ += this.buf16.buffer_fread2(index_) * amp_;
+        tmp17_ += this.buf17.buffer_fread2(index_) * amp_;
+        tmp18_ += this.buf18.buffer_fread2(index_) * amp_;
+        tmp19_ += this.buf19.buffer_fread2(index_) * amp_;
+
+        nc_ += 1;
+    );
+    
+    tmp00_ *= this.gain;
+    tmp01_ *= this.gain;
+    tmp02_ *= this.gain;
+    tmp03_ *= this.gain;
+    tmp04_ *= this.gain;
+    tmp05_ *= this.gain;
+    tmp06_ *= this.gain;
+    tmp07_ *= this.gain;
+    tmp08_ *= this.gain;
+    tmp09_ *= this.gain;
+    
+    tmp10_ *= this.gain;
+    tmp11_ *= this.gain;
+    tmp12_ *= this.gain;
+    tmp13_ *= this.gain;
+    tmp14_ *= this.gain;
+    tmp15_ *= this.gain;
+    tmp16_ *= this.gain;
+    tmp17_ *= this.gain;
+    tmp18_ *= this.gain;
+    tmp19_ *= this.gain;
+    
+    // DC filtering
+    tmp00_ = filt_dc00.buthp_do(tmp00_);
+    tmp01_ = filt_dc01.buthp_do(tmp01_);
+    tmp02_ = filt_dc02.buthp_do(tmp02_);
+    tmp03_ = filt_dc03.buthp_do(tmp03_);
+    tmp04_ = filt_dc04.buthp_do(tmp04_);
+    tmp05_ = filt_dc05.buthp_do(tmp05_);
+    tmp06_ = filt_dc06.buthp_do(tmp06_);
+    tmp07_ = filt_dc07.buthp_do(tmp07_);
+    tmp08_ = filt_dc08.buthp_do(tmp08_);
+    tmp09_ = filt_dc09.buthp_do(tmp09_);
+    
+    tmp10_ = filt_dc10.buthp_do(tmp10_);
+    tmp11_ = filt_dc11.buthp_do(tmp11_);
+    tmp12_ = filt_dc12.buthp_do(tmp12_);
+    tmp13_ = filt_dc13.buthp_do(tmp13_);
+    tmp14_ = filt_dc14.buthp_do(tmp14_);
+    tmp15_ = filt_dc15.buthp_do(tmp15_);
+    tmp16_ = filt_dc16.buthp_do(tmp16_);
+    tmp17_ = filt_dc17.buthp_do(tmp17_);
+    tmp18_ = filt_dc18.buthp_do(tmp18_);
+    tmp19_ = filt_dc19.buthp_do(tmp19_);
+    
+    // Filt4ering near Nyquist
+    tmp00_ = filt_lp00.butlp_do(tmp00_);
+    tmp01_ = filt_lp01.butlp_do(tmp01_);
+    tmp02_ = filt_lp02.butlp_do(tmp02_);
+    tmp03_ = filt_lp03.butlp_do(tmp03_);
+    tmp04_ = filt_lp04.butlp_do(tmp04_);
+    tmp05_ = filt_lp05.butlp_do(tmp05_);
+    tmp06_ = filt_lp06.butlp_do(tmp06_);
+    tmp07_ = filt_lp07.butlp_do(tmp07_);
+    tmp08_ = filt_lp08.butlp_do(tmp08_);
+    tmp09_ = filt_lp09.butlp_do(tmp09_);
+    
+    tmp10_ = filt_lp10.butlp_do(tmp10_);
+    tmp11_ = filt_lp11.butlp_do(tmp11_);
+    tmp12_ = filt_lp12.butlp_do(tmp12_);
+    tmp13_ = filt_lp13.butlp_do(tmp13_);
+    tmp14_ = filt_lp14.butlp_do(tmp14_);
+    tmp15_ = filt_lp15.butlp_do(tmp15_);
+    tmp16_ = filt_lp16.butlp_do(tmp16_);
+    tmp17_ = filt_lp17.butlp_do(tmp17_);
+    tmp18_ = filt_lp18.butlp_do(tmp18_);
+    tmp19_ = filt_lp19.butlp_do(tmp19_);
+    
+    this.phase += this.inc;
+    this.phase < 0 ? this.phase += 1 : this.phase >= 1 ? this.phase -= 1;
+        
+    // Record input signal and feedback onto cyclic buffer
+    // End point interpolation is handled by buffer_write()
+    // Feedback has phase reversed for additional richness(?)
+    this.buf00.buffer_write(this.recpos, signal[0] - this.feedback * tmp00_);
+    this.buf01.buffer_write(this.recpos, signal[1] - this.feedback * tmp01_);
+    this.buf02.buffer_write(this.recpos, signal[2] - this.feedback * tmp02_);
+    this.buf03.buffer_write(this.recpos, signal[3] - this.feedback * tmp03_);
+    this.buf04.buffer_write(this.recpos, signal[4] - this.feedback * tmp04_);
+    this.buf05.buffer_write(this.recpos, signal[5] - this.feedback * tmp05_);
+    this.buf06.buffer_write(this.recpos, signal[6] - this.feedback * tmp06_);
+    this.buf07.buffer_write(this.recpos, signal[7] - this.feedback * tmp07_);
+    this.buf08.buffer_write(this.recpos, signal[8] - this.feedback * tmp08_);
+    this.buf09.buffer_write(this.recpos, signal[9] - this.feedback * tmp09_);
+    
+    this.buf10.buffer_write(this.recpos, signal[10] - this.feedback * tmp10_);
+    this.buf11.buffer_write(this.recpos, signal[11] - this.feedback * tmp11_);
+    this.buf12.buffer_write(this.recpos, signal[12] - this.feedback * tmp12_);
+    this.buf13.buffer_write(this.recpos, signal[13] - this.feedback * tmp13_);
+    this.buf14.buffer_write(this.recpos, signal[14] - this.feedback * tmp14_);
+    this.buf15.buffer_write(this.recpos, signal[15] - this.feedback * tmp15_);
+    this.buf16.buffer_write(this.recpos, signal[16] - this.feedback * tmp16_);
+    this.buf17.buffer_write(this.recpos, signal[17] - this.feedback * tmp17_);
+    this.buf18.buffer_write(this.recpos, signal[18] - this.feedback * tmp18_);
+    this.buf19.buffer_write(this.recpos, signal[19] - this.feedback * tmp19_);
+
+    this.recpos += 1;
+    this.recpos >= this.buflen ? this.recpos = 0;
+
+    // Returns a vector of 20 samples
+    this.sigout[0] = tmp00_;
+    this.sigout[1] = tmp01_;
+    this.sigout[2] = tmp02_;
+    this.sigout[3] = tmp03_;
+    this.sigout[4] = tmp04_;
+    this.sigout[5] = tmp05_;
+    this.sigout[6] = tmp06_;
+    this.sigout[7] = tmp07_;
+    this.sigout[8] = tmp08_;
+    this.sigout[9] = tmp09_;
+    
+    this.sigout[10] = tmp10_;
+    this.sigout[11] = tmp11_;
+    this.sigout[12] = tmp12_;
+    this.sigout[13] = tmp13_;
+    this.sigout[14] = tmp14_;
+    this.sigout[15] = tmp15_;
+    this.sigout[16] = tmp16_;
+    this.sigout[17] = tmp17_;
+    this.sigout[18] = tmp18_;
+    this.sigout[19] = tmp19_;
+
+    this.sigout;
+);

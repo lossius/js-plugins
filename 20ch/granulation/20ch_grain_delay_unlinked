@@ -1,0 +1,162 @@
+*
+ This plug is based on example code from cookdsp.
+
+ cookdsp is copyright (c) - 2014 - Olivier Belanger
+ Permission to use, copy, modify, and/or distribute this
+ software for any purpose with or without fee is hereby
+ granted, provided that the above copyright notice and this
+ permission notice appear in all copies. CookDSP IS PROVIDED
+ "AS IS", WITHOUT WARRANTY OF ANY KIND FROM THE AUTHOR.
+*/
+
+desc:20ch Grain Delay - Unlinked Channels (cookdsp) (Lossius)
+
+slider1:8<1,64,1>Number Of Grains
+slider2:100<1,500,1>Grain Duration (ms)
+slider3:125<0,1500,1>Delay (ms)
+slider4:0<0,500,1>Delay Randomisation (ms)
+slider5:0<-36.,12.,0.01>Transposition (MIDI)
+slider6:0.1<0,1>Random Transposition
+slider7:0<0,95>Feedback (%)
+slider8:0<0,1,1{Forward,reverse}>Grain Direction (not yet implemented)
+slider9:0<0,1,1{No correction needed,Correcting delay time to prevent overshooting}>Correction Status
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+in_pin:5
+in_pin:6
+in_pin:7
+in_pin:8
+in_pin:9
+in_pin:10
+
+in_pin:11
+in_pin:12
+in_pin:13
+in_pin:14
+in_pin:15
+in_pin:16
+in_pin:17
+in_pin:18
+in_pin:19
+in_pin:20
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+out_pin:5
+out_pin:6
+out_pin:7
+out_pin:8
+out_pin:9
+out_pin:10
+
+out_pin:11
+out_pin:12
+out_pin:13
+out_pin:14
+out_pin:15
+out_pin:16
+out_pin:17
+out_pin:18
+out_pin:19
+out_pin:20
+
+import cookdsp.jsfx-inc
+import granulator-mods.jsfx-inc
+
+@init
+
+// Initializes granulator with an internal memory of 4 seconds.
+// 4 seconds is more than enough with the parameter ranges set for this plugin
+// To calculate needed buffer size: Max delay + Max Delay Random + Max Grain Duration * Max Speed
+kBufLen = 4;
+
+buf00 = graindelay00.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf01 = graindelay01.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf02 = graindelay02.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf03 = graindelay03.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf04 = graindelay04.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf05 = graindelay05.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf06 = graindelay06.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf07 = graindelay07.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf08 = graindelay08.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf09 = graindelay09.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+
+buf10 = graindelay10.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf11 = graindelay11.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf12 = graindelay12.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf13 = graindelay13.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf14 = graindelay14.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf15 = graindelay15.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf16 = graindelay16.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf17 = graindelay17.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf18 = graindelay18.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+buf19 = graindelay19.graindelay(num, dur, delay, delayrnd, pitch, pitrnd, feedback, kBufLen);
+
+
+@slider
+num = slider1;
+dur = slider2*0.001;
+delay = slider3 * 0.001;
+delayrnd = slider4 * 0.001;
+pitch = pow(2,(slider5/12.));
+pitrnd = slider6;
+feedback = slider7;
+
+// Sets all parameters at once.
+graindelay00.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay01.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay02.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay03.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay04.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay05.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay06.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay07.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay08.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay09.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+
+graindelay10.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay11.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay12.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay13.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay14.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay15.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay16.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay17.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay18.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+graindelay19.graindelay_set(num, dur, delay, delayrnd, pitch, pitrnd, feedback);
+
+
+
+@block
+slider9 = graindelay0.graindelay_get_status();
+sliderchange(slider9);
+
+@sample
+
+spl0 = graindelay00.graindelay_do(spl0);
+spl1 = graindelay01.graindelay_do(spl1);
+spl2 = graindelay02.graindelay_do(spl2);
+spl3 = graindelay03.graindelay_do(spl3);
+spl4 = graindelay04.graindelay_do(spl4);
+spl5 = graindelay05.graindelay_do(spl5);
+spl6 = graindelay06.graindelay_do(spl6);
+spl7 = graindelay07.graindelay_do(spl7);
+spl8 = graindelay08.graindelay_do(spl8);
+spl9 = graindelay09.graindelay_do(spl9);
+
+spl10 = graindelay10.graindelay_do(spl10);
+spl11 = graindelay11.graindelay_do(spl11);
+spl12 = graindelay12.graindelay_do(spl12);
+spl13 = graindelay13.graindelay_do(spl13);
+spl14 = graindelay14.graindelay_do(spl14);
+spl15 = graindelay15.graindelay_do(spl15);
+spl16 = graindelay16.graindelay_do(spl16);
+spl17 = graindelay17.graindelay_do(spl17);
+spl18 = graindelay18.graindelay_do(spl18);
+spl19 = graindelay19.graindelay_do(spl19);
+

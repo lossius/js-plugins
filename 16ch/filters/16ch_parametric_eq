@@ -1,0 +1,152 @@
+desc:16 16ch Filters - Parametric EQ Filter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:1000<100,10000>Center Frequency
+slider2:2<0.01,4,0.01>Bandwidth (oct)
+slider3:0<-18,18>Boost/Cut (dB)
+slider4:0<0,2,1{Peak/Notch,Lowshelf,Highshelf}>Filter type
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+in_pin:5
+in_pin:6
+in_pin:7
+in_pin:8
+
+in_pin:9
+in_pin:10
+in_pin:11
+in_pin:12
+in_pin:13
+in_pin:14
+in_pin:15
+in_pin:16
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+out_pin:5
+out_pin:6
+out_pin:7
+out_pin:8
+
+out_pin:9
+out_pin:10
+out_pin:11
+out_pin:12
+out_pin:13
+out_pin:14
+out_pin:15
+out_pin:16
+
+
+@init
+f01.eq(slider1, slider2, slider3, slider4);
+f02.eq(slider1, slider2, slider3, slider4);
+f03.eq(slider1, slider2, slider3, slider4);
+f04.eq(slider1, slider2, slider3, slider4);
+f05.eq(slider1, slider2, slider3, slider4);
+f06.eq(slider1, slider2, slider3, slider4);
+f07.eq(slider1, slider2, slider3, slider4);
+f08.eq(slider1, slider2, slider3, slider4);
+f09.eq(slider1, slider2, slider3, slider4);
+f10.eq(slider1, slider2, slider3, slider4);
+f11.eq(slider1, slider2, slider3, slider4);
+f12.eq(slider1, slider2, slider3, slider4);
+f13.eq(slider1, slider2, slider3, slider4);
+f14.eq(slider1, slider2, slider3, slider4);
+f15.eq(slider1, slider2, slider3, slider4);
+f16.eq(slider1, slider2, slider3, slider4);
+
+@slider
+f01.eq_set_freq( slider1 );
+f02.eq_set_freq( slider1 );
+f03.eq_set_freq( slider1 );
+f04.eq_set_freq( slider1 );
+f05.eq_set_freq( slider1 );
+f06.eq_set_freq( slider1 );
+f07.eq_set_freq( slider1 );
+f08.eq_set_freq( slider1 );
+f09.eq_set_freq( slider1 );
+f10.eq_set_freq( slider1 );
+f11.eq_set_freq( slider1 );
+f12.eq_set_freq( slider1 );
+f13.eq_set_freq( slider1 );
+f14.eq_set_freq( slider1 );
+f15.eq_set_freq( slider1 );
+f16.eq_set_freq( slider1 );
+
+q = bandwidth2q(slider2);
+f01.eq_set_q( q );
+f02.eq_set_q( q );
+f03.eq_set_q( q );
+f04.eq_set_q( q );
+f05.eq_set_q( q );
+f06.eq_set_q( q );
+f07.eq_set_q( q );
+f08.eq_set_q( q );
+f09.eq_set_q( q );
+f10.eq_set_q( q );
+f11.eq_set_q( q );
+f12.eq_set_q( q );
+f13.eq_set_q( q );
+f14.eq_set_q( q );
+f15.eq_set_q( q );
+f16.eq_set_q( q );
+
+f01.eq_set_boost( slider3 );
+f02.eq_set_boost( slider3 );
+f03.eq_set_boost( slider3 );
+f04.eq_set_boost( slider3 );
+f05.eq_set_boost( slider3 );
+f06.eq_set_boost( slider3 );
+f07.eq_set_boost( slider3 );
+f08.eq_set_boost( slider3 );
+f09.eq_set_boost( slider3 );
+f10.eq_set_boost( slider3 );
+f11.eq_set_boost( slider3 );
+f12.eq_set_boost( slider3 );
+f13.eq_set_boost( slider3 );
+f14.eq_set_boost( slider3 );
+f15.eq_set_boost( slider3 );
+f16.eq_set_boost( slider3 );
+
+f01.eq_set_type( slider4 );
+f02.eq_set_type( slider4 );
+f03.eq_set_type( slider4 );
+f04.eq_set_type( slider4 );
+f05.eq_set_type( slider4 );
+f06.eq_set_type( slider4 );
+f07.eq_set_type( slider4 );
+f08.eq_set_type( slider4 );
+f09.eq_set_type( slider4 );
+f10.eq_set_type( slider4 );
+f11.eq_set_type( slider4 );
+f12.eq_set_type( slider4 );
+f13.eq_set_type( slider4 );
+f14.eq_set_type( slider4 );
+f15.eq_set_type( slider4 );
+f16.eq_set_type( slider4 );
+
+@sample
+spl0  = f01.eq_do( spl0  );
+spl1  = f02.eq_do( spl1  );
+spl2  = f03.eq_do( spl2  );
+spl3  = f04.eq_do( spl3  );
+spl4  = f05.eq_do( spl4  );
+spl5  = f06.eq_do( spl5  );
+spl6  = f07.eq_do( spl6  );
+spl7  = f08.eq_do( spl7  );
+spl8  = f09.eq_do( spl8  );
+spl9  = f10.eq_do( spl9  );
+spl10 = f11.eq_do( spl10 );
+spl11 = f12.eq_do( spl11 );
+spl12 = f13.eq_do( spl12 );
+spl13 = f14.eq_do( spl13 );
+spl14 = f15.eq_do( spl14 );
+spl15 = f16.eq_do( spl15 );

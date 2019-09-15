@@ -1,0 +1,121 @@
+desc:16ch Filters - 1st order Butterworth Lowpass Filter (cookdsp) (Lossius)
+
+import cookdsp.jsfx-inc
+import lossius-cookdsp-mods.jsfx-inc
+
+slider1:3500<20,16000, 0.1>Cutoff Frequency In Hz
+
+in_pin:1
+in_pin:2
+in_pin:3
+in_pin:4
+in_pin:5
+in_pin:6
+in_pin:7
+in_pin:8
+
+in_pin:9
+in_pin:10
+in_pin:11
+in_pin:12
+in_pin:13
+in_pin:14
+in_pin:15
+in_pin:16
+
+out_pin:1
+out_pin:2
+out_pin:3
+out_pin:4
+out_pin:5
+out_pin:6
+out_pin:7
+out_pin:8
+
+out_pin:9
+out_pin:10
+out_pin:11
+out_pin:12
+out_pin:13
+out_pin:14
+out_pin:15
+out_pin:16
+
+
+/********************************************************
+*
+* Init
+*
+********************************************************/
+@init
+
+filt01.butlp1(slider1);
+filt02.butlp1(slider1);
+filt03.butlp1(slider1);
+filt04.butlp1(slider1);
+filt05.butlp1(slider1);
+filt06.butlp1(slider1);
+filt07.butlp1(slider1);
+filt08.butlp1(slider1);
+
+filt09.butlp1(slider1);
+filt10.butlp1(slider1);
+filt11.butlp1(slider1);
+filt12.butlp1(slider1);
+filt13.butlp1(slider1);
+filt14.butlp1(slider1);
+filt15.butlp1(slider1);
+filt16.butlp1(slider1);
+
+
+/********************************************************
+*
+* Sliders
+*
+********************************************************/
+@slider
+
+filt01.butlp1_set_freq(slider1);
+filt02.butlp1_set_freq(slider1);
+filt03.butlp1_set_freq(slider1);
+filt04.butlp1_set_freq(slider1);
+filt05.butlp1_set_freq(slider1);
+filt06.butlp1_set_freq(slider1);
+filt07.butlp1_set_freq(slider1);
+filt08.butlp1_set_freq(slider1);
+
+filt09.butlp1_set_freq(slider1);
+filt10.butlp1_set_freq(slider1);
+filt11.butlp1_set_freq(slider1);
+filt12.butlp1_set_freq(slider1);
+filt13.butlp1_set_freq(slider1);
+filt14.butlp1_set_freq(slider1);
+filt15.butlp1_set_freq(slider1);
+filt16.butlp1_set_freq(slider1);
+
+
+
+/********************************************************
+*
+* Sample processing
+*
+********************************************************/
+@sample
+
+spl0 = filt01.butlp1_do(spl0);
+spl1 = filt02.butlp1_do(spl1);
+spl2 = filt03.butlp1_do(spl2);
+spl3 = filt04.butlp1_do(spl3);
+spl4 = filt05.butlp1_do(spl4);
+spl5 = filt06.butlp1_do(spl5);
+spl6 = filt07.butlp1_do(spl6);
+spl7 = filt08.butlp1_do(spl7);
+
+spl8  = filt09.butlp1_do(spl8);
+spl9  = filt10.butlp1_do(spl9);
+spl10 = filt11.butlp1_do(spl10);
+spl11 = filt12.butlp1_do(spl11);
+spl12 = filt13.butlp1_do(spl12);
+spl13 = filt14.butlp1_do(spl13);
+spl14 = filt15.butlp1_do(spl14);
+spl15 = filt16.butlp1_do(spl15);
